@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JP Jewellers | Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #eef2f5;
+            font-family: 'Arial', 'Helvetica', 'Segoe UI', sans-serif;
+            padding: 15px;
+        }
+        .dashboard-nav {
+            background: #1e466e;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            color: white;
+        }
+        .dashboard-nav h2 { font-size: 20px; font-weight: 700; }
+        .nav-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 5px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-gold { background: #c2a15b; color: #1e466e; }
+        .btn-gold:hover { background: #d4b87a; }
+        .btn-outline { background: transparent; border: 1px solid #c2a15b; color: #c2a15b; }
+        .btn-outline:hover { background: rgba(194,161,91,0.1); }
+        .btn-red { background: #dc3545; color: white; }
+        .btn-red:hover { background: #c82333; }
+        .btn-green { background: #28a745; color: white; }
+        .btn-green:hover { background: #218838; }
+        .btn-blue { background: #17a2b8; color: white; }
+        .btn-blue:hover { background: #138496; }
+        .btn-sm { padding: 4px 8px; font-size: 11px; }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 25px 0 10px;
+            color: #1e466e;
+            border-left: 4px solid #c2a15b;
+            padding-left: 12px;
+        }
+
+        .dashboard-table-wrapper {
+            background: white;
+            overflow-x: auto;
+            border: 1px solid black;
+        }
+        .dashboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        .dashboard-table th, .dashboard-table td {
+            border: 1px solid black;
+            padding: 8px 6px;
+            text-align: left;
+        }
+        .dashboard-table th { background: #f0f2f5; font-weight: bold; }
+        .dashboard-table tr:hover { background: #f9f9f9; }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 9px;
+            font-weight: bold;
+            border: 1px solid;
+        }
+        .badge-gold { background: #fef3c7; color: #92400e; border-color: #92400e; }
+        .badge-silver { background: #f1f5f9; color: #475569; border-color: #475569; }
+        .badge-paid { background: #d4edda; color: #155724; border-color: #155724; }
+        .badge-due { background: #f8d7da; color: #721c24; border-color: #721c24; }
+
+        .search-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .search-input {
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 260px;
+        }
+        .file-status {
+            font-size: 13px;
+            color: #1e466e;
+            font-weight: bold;
+            background: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 1px solid #ccc;
+            margin: auto;
+        }
+        .modal-content h3 { margin-bottom: 15px; color: #1e466e; }
+        .rate-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .rate-table th, .rate-table td { padding: 8px; border-bottom: 1px solid #ddd; text-align: left; }
+        .rate-table input { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        /* Due/Paid specific */
+        .dp-search-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+        .dp-search-row label { font-weight: bold; font-size: 13px; color: #1e466e; white-space: nowrap; }
+        .dp-search-row input {
+            flex: 1;
+            min-width: 160px;
+            padding: 7px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .dp-search-row select {
+            padding: 7px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .dp-hint {
+            font-size: 11px;
+            color: #888;
+            margin-top: -8px;
+            margin-bottom: 8px;
+        }
+
+        .statement-box { margin-top: 14px; }
+        .cust-info-bar {
+            background: #1e466e;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px 4px 0 0;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .cust-info-bar strong { font-size: 15px; }
+
+        .statement-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        .statement-table th, .statement-table td {
+            border: 1px solid #ddd;
+            padding: 6px 8px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        .statement-table th { background: #f0f2f5; font-weight: bold; }
+        .statement-table tr.paid-row { background: #f0fff4; }
+        .statement-table tr.due-row { background: #fff5f5; }
+        .editable-input {
+            width: 100%;
+            padding: 3px 5px;
+            border: 1px solid #aaa;
+            border-radius: 3px;
+            font-size: 11px;
+            background: white;
+        }
+        .editable-select {
+            padding: 3px 5px;
+            border: 1px solid #aaa;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+        .summary-bar {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-top: none;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            flex-wrap: wrap;
+        }
+        .add-entry-form {
+            background: #f0f7ff;
+            border: 1px solid #b0d0f0;
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+        .entry-fields {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .entry-fields label { font-size: 11px; color: #555; display: block; margin-bottom: 3px; }
+        .entry-fields input, .entry-fields select {
+            padding: 6px 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .entry-field-group { display: flex; flex-direction: column; }
+
+        /* Printable bill */
+        @media print {
+            body * { visibility: hidden; }
+            #printableBillContainer, #printableBillContainer * { visibility: visible; }
+            #printableBillContainer {
+                position: absolute;
+                top: 0; left: 0;
+                width: 100%;
+                background: white;
+            }
+            .no-print { display: none !important; }
+            @page { margin: 1cm; size: A5; }
+        }
+        .printable-bill {
+            font-family: Arial, sans-serif;
+            max-width: 580px;
+            margin: 0 auto;
+            background: white;
+            padding: 16px;
+        }
+        .printable-bill .vendor-header {
+            border: 2px solid #1e466e;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            border-radius: 4px;
+        }
+        .printable-bill .company-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+        .printable-bill .company-icon {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            background: #1e466e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .printable-bill .vendor-name {
+            font-size: 18px;
+            font-weight: 800;
+            color: #1e466e;
+            line-height: 1.2;
+        }
+        .printable-bill .vendor-sub { font-size: 10px; color: #555; margin-top: 2px; }
+        .printable-bill .vendor-details { font-size: 10px; line-height: 1.5; color: #333; margin-top: 6px; }
+        .printable-bill .bill-title {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 12px 0 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #1e466e;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 8px;
+        }
+        .printable-bill .cust-details {
+            font-size: 11px;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        .printable-bill .stmt-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            margin-bottom: 10px;
+        }
+        .printable-bill .stmt-table th, .printable-bill .stmt-table td {
+            border: 1px solid #333;
+            padding: 5px 7px;
+        }
+        .printable-bill .stmt-table th { background: #f0f2f5; font-weight: bold; }
+        .printable-bill .stmt-summary {
+            border: 1px solid #333;
+            padding: 7px 10px;
+            font-size: 11px;
+            font-weight: bold;
+            text-align: right;
+            background: #f8f9fa;
+            margin-bottom: 14px;
+        }
+        .printable-bill .signature-footer {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            border-top: 1px solid #ccc;
+            padding-top: 12px;
+            margin-bottom: 10px;
+        }
+        .printable-bill .sign-box {
+            border: 1px solid #333;
+            padding: 10px;
+            min-height: 60px;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        .printable-bill .print-footer {
+            font-size: 8px;
+            text-align: center;
+            color: #888;
+            border-top: 1px solid #eee;
+            padding-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-nav">
+    <h2>JP JEWELLERS | Dashboard</h2>
+    <div class="nav-buttons">
+        <button class="btn btn-outline" id="changeFileBtn">Change Pendrive File</button>
+        <button class="btn btn-gold" onclick="window.location.href='invoice.html'">New Invoice</button>
+        <button class="btn btn-blue" id="orderBillBtn">Order Bill</button>
+        <button class="btn btn-blue" id="bhavBtn">Bhav Change</button>
+        <button class="btn btn-green" id="duePaidBtn">Due / Paid Statement</button>
+        <button class="btn btn-outline" id="refreshBtn">Refresh</button>
+    </div>
+</div>
+
+<div class="search-area">
+    <div class="file-status" id="fileStatus">No file loaded. Click "Change Pendrive File".</div>
+    <div>
+        <input type="text" id="searchInvoiceInput" class="search-input" placeholder="Search invoices (name, phone, date)">
+        <button class="btn btn-outline" style="padding:6px 12px;" onclick="filterInvoices()">Search</button>
+        <button class="btn btn-outline" style="padding:6px 12px;" onclick="clearInvoiceSearch()">Clear</button>
+    </div>
+</div>
+
+<!-- Invoice Section -->
+<div class="section-title">Invoices</div>
+<div class="dashboard-table-wrapper">
+    <table class="dashboard-table">
+        <thead>
+            <tr><th>S.No</th><th>Date</th><th>Customer Name</th><th>Phone</th><th>Items</th><th>Payment</th><th>Grand Total</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="invoiceTbody"><tr><td colspan="8">Loading...</tbody>
+        </tbody>
+    </table>
+</div>
+
+<!-- Order Section -->
+<div class="section-title">Order Bills</div>
+<div class="search-area" style="margin-top:0;">
+    <div></div>
+    <div>
+        <input type="text" id="searchOrderInput" class="search-input" placeholder="Search orders (name, mobile, aadhar, pan)">
+        <button class="btn btn-outline" style="padding:6px 12px;" onclick="filterOrders()">Search</button>
+        <button class="btn btn-outline" style="padding:6px 12px;" onclick="clearOrderSearch()">Clear</button>
+    </div>
+</div>
+<div class="dashboard-table-wrapper">
+    <table class="dashboard-table">
+        <thead>
+            <tr><th>S.No</th><th>Date</th><th>Customer Name</th><th>Mobile</th><th>Aadhar</th><th>PAN</th><th>Advance (₹)</th><th>Description</th><th>Actions</th></td>
+        </thead>
+        <tbody id="orderTbody"><tr><td colspan="9">Loading...</tbody>
+        </tbody>
+    </table>
+</div>
+
+<!-- Payment Ledger Section (ALL ENTRIES) -->
+<div class="section-title">Payment Ledger (All Transactions)</div>
+<div class="search-area" style="margin-top:0;">
+    <div></div>
+    <div>
+        <input type="text" id="searchLedgerInput" class="search-input" placeholder="Search by name, phone, type, remark...">
+        <button class="btn btn-outline" style="padding:6px 12px;" onclick="filterLedger()">Search</button>
+        <button class="btn btn-outline" style="padding:6px 12px;" onclick="clearLedgerSearch()">Clear</button>
+    </div>
+</div>
+<div class="dashboard-table-wrapper">
+    <table class="dashboard-table">
+        <thead>
+            <tr><th>S.No</th><th>Date</th><th>Customer Name</th><th>Phone</th><th>Type</th><th>Amount (₹)</th><th>Remark</th></tr>
+        </thead>
+        <tbody id="ledgerTbody">
+            <tr><td colspan="7">Loading...</tbody>
+        </tbody>
+    </table>
+</div>
+
+<!-- Bhav Change Modal -->
+<div id="bhavModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>Set Gold Rates (₹ per gram)</h3>
+        <table class="rate-table">
+            <tr><th>Karat</th><th>Rate (₹/g)</th>比
+            <tr><td>24K Gold</td><td><input type="number" id="rate24K" step="10" value="0"></td></tr>
+            <tr><td>22K Gold</td><td><input type="number" id="rate22K" step="10" value="0"></td></tr>
+            <tr><td>18K Gold</td><td><input type="number" id="rate18K" step="10" value="0"></td></tr>
+            <tr><td>14K Gold</td><td><input type="number" id="rate14K" step="10" value="0"></td></tr>
+            <tr><td>9K Gold</td><td><input type="number" id="rate9K" step="10" value="0"></td></tr>
+        </table>
+        <div class="modal-buttons">
+            <button class="btn btn-outline" id="closeBhavModal">Cancel</button>
+            <button class="btn btn-green" id="saveBhavBtn">Save Rates</button>
+        </div>
+    </div>
+</div>
+
+<!-- Due/Paid Statement Modal -->
+<div id="duePaidModal" class="modal-overlay">
+    <div class="modal-content" style="max-width:900px;">
+        <h3 style="margin-bottom:6px;">Customer Payment Statement</h3>
+        <p style="font-size:12px;color:#666;margin-bottom:14px;">Search by Phone Number, Aadhar Number, or PAN Card</p>
+
+        <div class="dp-search-row">
+            <label>Search By:</label>
+            <select id="dpSearchType">
+                <option value="phone">Phone Number</option>
+                <option value="aadhar">Aadhar Number</option>
+                <option value="pan">PAN Card</option>
+            </select>
+            <input type="text" id="dpSearchValue" placeholder="Enter value to search...">
+            <button class="btn btn-blue" id="fetchDuePaidBtn">Show Statement</button>
+        </div>
+        <p class="dp-hint">Phone: 10 digits &nbsp;|&nbsp; Aadhar: 12 digits &nbsp;|&nbsp; PAN: 10 characters (e.g. ABCDE1234F)</p>
+
+        <div class="modal-buttons" style="justify-content:space-between; align-items:center; border-top:1px solid #eee; padding-top:10px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-green" id="addEntryBtn">+ Add New Entry</button>
+                <button class="btn btn-gold" id="printStatementBtn">Print Receipt</button>
+            </div>
+            <button class="btn btn-outline" id="closeDuePaidModal">Close</button>
+        </div>
+
+        <div id="statementResult" style="display:none;" class="statement-box"></div>
+
+        <div id="entryForm" class="add-entry-form" style="display:none;">
+            <h4>+ Add New Transaction</h4>
+            <div class="entry-fields">
+                <div class="entry-field-group">
+                    <label>Date (DD/MM/YYYY)</label>
+                    <input type="text" id="entryDate" placeholder="DD/MM/YYYY" style="width:130px;">
+                </div>
+                <div class="entry-field-group">
+                    <label>Type</label>
+                    <select id="entryType">
+                        <option value="Paid">Paid</option>
+                        <option value="Due">Due</option>
+                    </select>
+                </div>
+                <div class="entry-field-group">
+                    <label>Amount (₹)</label>
+                    <input type="number" id="entryAmount" placeholder="0.00" step="1" style="width:120px;">
+                </div>
+                <div class="entry-field-group">
+                    <label>Remark</label>
+                    <input type="text" id="entryRemark" placeholder="e.g. Cash, UPI" style="width:160px;">
+                </div>
+                <div class="entry-field-group" style="justify-content:flex-end;">
+                    <label>&nbsp;</label>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn btn-green" id="saveEntryBtn">Save</button>
+                        <button class="btn btn-outline btn-sm" id="cancelEntryBtn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="printableBillContainer" style="display:none;"></div>
+
+<script>
+    const DB_NAME = 'JPJewellersFileHandleDB';
+    const STORE_NAME = 'fileHandleStore';
+    const KEY_NAME = 'handle';
+
+    let currentFileHandle = null;
+    let appData = { invoices: [], customers: {}, goldRates: { '24K':0,'22K':0,'18K':0,'14K':0,'9K':0 }, orders: [] };
+    let invoiceFiltered = [], orderFiltered = [], ledgerFiltered = '';
+    let lastStatementData = { customer: null, phone: '', transactions: [], totalPaid: 0, totalDue: 0 };
+    let currentPhoneForEntry = '';
+
+    // ---------- File System ----------
+    async function storeFileHandle(handle) {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onupgradeneeded = () => { const db = request.result; if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME); };
+            request.onsuccess = () => {
+                const db = request.result;
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).put(handle, KEY_NAME);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            };
+            request.onerror = () => reject(request.error);
+        });
+    }
+    async function getStoredFileHandle() {
+        return new Promise((resolve) => {
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onupgradeneeded = () => { const db = request.result; if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME); };
+            request.onsuccess = () => {
+                const db = request.result;
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const getReq = tx.objectStore(STORE_NAME).get(KEY_NAME);
+                getReq.onsuccess = () => resolve(getReq.result || null);
+                getReq.onerror = () => resolve(null);
+            };
+            request.onerror = () => resolve(null);
+        });
+    }
+    async function ensureWritePermission(handle) {
+        if (await handle.queryPermission({ mode: 'readwrite' }) === 'granted') return true;
+        return (await handle.requestPermission({ mode: 'readwrite' })) === 'granted';
+    }
+    async function loadFromFile(handle) {
+        try {
+            const file = await handle.getFile();
+            const text = await file.text();
+            if (text.trim()) {
+                const parsed = JSON.parse(text);
+                appData.invoices = parsed.invoices || [];
+                appData.customers = parsed.customers || {};
+                appData.goldRates = parsed.goldRates || { '24K':0,'22K':0,'18K':0,'14K':0,'9K':0 };
+                appData.orders = parsed.orders || [];
+            } else {
+                appData = { invoices: [], customers: {}, goldRates: { '24K':0,'22K':0,'18K':0,'14K':0,'9K':0 }, orders: [] };
+            }
+            document.getElementById('fileStatus').innerHTML = `File: ${file.name} (${appData.invoices.length} invoices, ${appData.orders.length} orders)`;
+            renderInvoiceTable();
+            renderOrderTable();
+            renderLedgerTable();
+            return true;
+        } catch(e) { console.error(e); return false; }
+    }
+    async function writeToFile() {
+        if (!currentFileHandle) { alert("No file selected."); return false; }
+        const hasPerm = await ensureWritePermission(currentFileHandle);
+        if (!hasPerm) { alert("Permission denied. Please re-select the file."); return false; }
+        try {
+            const writable = await currentFileHandle.createWritable();
+            await writable.write(JSON.stringify({ invoices: appData.invoices, customers: appData.customers, goldRates: appData.goldRates, orders: appData.orders }, null, 2));
+            await writable.close();
+            const file = await currentFileHandle.getFile();
+            document.getElementById('fileStatus').innerHTML = `File: ${file.name} (${appData.invoices.length} invoices, ${appData.orders.length} orders) — Saved ✓`;
+            return true;
+        } catch(e) { alert("Error writing: " + e.message); return false; }
+    }
+    async function selectNewFile() {
+        if (!window.showOpenFilePicker) { alert("Use Chrome/Edge for pendrive access."); return false; }
+        try {
+            const [handle] = await window.showOpenFilePicker({ types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }] });
+            if (!(await ensureWritePermission(handle))) { alert("Write permission denied"); return false; }
+            currentFileHandle = handle;
+            await storeFileHandle(handle);
+            await loadFromFile(handle);
+            return true;
+        } catch(e) { if (e.name !== 'AbortError') alert("Error: " + e.message); return false; }
+    }
+    async function init() {
+        const stored = await getStoredFileHandle();
+        if (stored && await ensureWritePermission(stored)) {
+            currentFileHandle = stored;
+            await loadFromFile(currentFileHandle);
+        } else {
+            await selectNewFile();
+        }
+    }
+
+    // ---------- Helper to flatten all ledger entries ----------
+    function getAllLedgerEntries() {
+        const entries = [];
+        for (const [phone, cust] of Object.entries(appData.customers)) {
+            if (cust.ledger && Array.isArray(cust.ledger)) {
+                for (const txn of cust.ledger) {
+                    entries.push({
+                        date: txn.date,
+                        customerName: cust.name || 'Unknown',
+                        phone: phone,
+                        type: txn.type,
+                        amount: txn.amount,
+                        remark: txn.remark || ''
+                    });
+                }
+            }
+        }
+        // sort by date (newest first)
+        entries.sort((a,b) => (b.date || '').localeCompare(a.date || ''));
+        return entries;
+    }
+
+    // ---------- Payment Ledger Table (ALL ENTRIES) ----------
+    function renderLedgerTable() {
+        const tbody = document.getElementById('ledgerTbody');
+        let entries = getAllLedgerEntries();
+        if (ledgerFiltered) {
+            const term = ledgerFiltered.toLowerCase();
+            entries = entries.filter(e => 
+                (e.customerName || '').toLowerCase().includes(term) ||
+                (e.phone || '').includes(term) ||
+                (e.type || '').toLowerCase().includes(term) ||
+                (e.remark || '').toLowerCase().includes(term)
+            );
+        }
+        // NO LIMIT – show all entries
+        if (!entries.length) {
+            tbody.innerHTML = '<tr><td colspan="7">No payment transactions found.</tbody>';
+            return;
+        }
+        tbody.innerHTML = '';
+        entries.forEach((entry, idx) => {
+            const row = tbody.insertRow();
+            row.insertCell(0).innerText = idx+1;
+            row.insertCell(1).innerText = entry.date || '-';
+            row.insertCell(2).innerText = entry.customerName;
+            row.insertCell(3).innerText = entry.phone;
+            const badgeClass = entry.type === 'Paid' ? 'badge-paid' : 'badge-due';
+            row.insertCell(4).innerHTML = `<span class="badge ${badgeClass}">${entry.type}</span>`;
+            row.insertCell(5).innerHTML = `₹${(entry.amount || 0).toFixed(2)}`;
+            row.insertCell(6).innerText = entry.remark || '-';
+        });
+    }
+
+    window.filterLedger = () => {
+        ledgerFiltered = document.getElementById('searchLedgerInput').value.trim();
+        renderLedgerTable();
+    };
+    window.clearLedgerSearch = () => {
+        document.getElementById('searchLedgerInput').value = '';
+        ledgerFiltered = '';
+        renderLedgerTable();
+    };
+
+    // ---------- Invoice Table ----------
+    function renderInvoiceTable() {
+        const tbody = document.getElementById('invoiceTbody');
+        let list = invoiceFiltered.length ? invoiceFiltered : appData.invoices;
+        if (!invoiceFiltered.length) list = list.slice(-3);
+        if (!list.length) { tbody.innerHTML = '<tr><td colspan="8">No invoices. Click "New Invoice".</tbody>'; return; }
+        tbody.innerHTML = '';
+        [...list].reverse().forEach((inv, idx) => {
+            const row = tbody.insertRow();
+            row.insertCell(0).innerText = idx+1;
+            row.insertCell(1).innerText = inv.date || '-';
+            row.insertCell(2).innerText = inv.custName || '-';
+            row.insertCell(3).innerText = inv.custPhone || '-';
+            const hasGold = (inv.items || []).some(i => (i.purity || '').toLowerCase().includes('gold'));
+            row.insertCell(4).innerHTML = `${(inv.items||[]).length} item(s) ${hasGold ? '<span class="badge badge-gold">Gold</span>' : '<span class="badge badge-silver">Silver</span>'}`;
+            row.insertCell(5).innerText = (inv.paymentModes || []).join(', ') || '—';
+            row.insertCell(6).innerHTML = `₹${(inv.grandTotal || 0).toFixed(2)}`;
+            row.insertCell(7).innerHTML = `<button class="btn btn-outline btn-sm" onclick="editInvoice('${inv.id}')">Edit</button> <button class="btn btn-red btn-sm" onclick="deleteInvoice('${inv.id}')">Delete</button>`;
+        });
+    }
+    window.filterInvoices = () => { const t = document.getElementById('searchInvoiceInput').value.trim().toLowerCase(); invoiceFiltered = t ? appData.invoices.filter(i => (i.custName||'').toLowerCase().includes(t)||(i.custPhone||'').includes(t)||(i.date||'').includes(t)) : []; renderInvoiceTable(); };
+    window.clearInvoiceSearch = () => { document.getElementById('searchInvoiceInput').value = ''; invoiceFiltered = []; renderInvoiceTable(); };
+    window.editInvoice = id => window.location.href = `invoice.html?id=${id}`;
+    window.deleteInvoice = async id => { if (!confirm("Delete this invoice?")) return; appData.invoices = appData.invoices.filter(i => i.id !== id); await writeToFile(); renderInvoiceTable(); };
+
+    // ---------- Order Table ----------
+    function renderOrderTable() {
+        const tbody = document.getElementById('orderTbody');
+        let list = orderFiltered.length ? orderFiltered : appData.orders;
+        if (!orderFiltered.length) list = list.slice(-3);
+        if (!list.length) { tbody.innerHTML = '<td><td colspan="9">No orders. Click "Order Bill".</tbody>'; return; }
+        tbody.innerHTML = '';
+        [...list].reverse().forEach((order, idx) => {
+            const row = tbody.insertRow();
+            row.insertCell(0).innerText = idx+1;
+            row.insertCell(1).innerText = order.date || '-';
+            row.insertCell(2).innerText = order.custName || '-';
+            row.insertCell(3).innerText = order.mobile || '-';
+            row.insertCell(4).innerText = order.aadhar || '-';
+            row.insertCell(5).innerText = order.pan || '-';
+            row.insertCell(6).innerHTML = `₹${(order.advance || 0).toFixed(2)}`;
+            row.insertCell(7).innerText = order.description || '-';
+            row.insertCell(8).innerHTML = `<button class="btn btn-outline btn-sm" onclick="editOrder('${order.id}')">Edit</button> <button class="btn btn-red btn-sm" onclick="deleteOrder('${order.id}')">Delete</button>`;
+        });
+    }
+    window.filterOrders = () => {
+        const term = document.getElementById('searchOrderInput').value.trim().toLowerCase();
+        if (!term) { orderFiltered = []; renderOrderTable(); return; }
+        orderFiltered = appData.orders.filter(order => 
+            (order.custName || '').toLowerCase().includes(term) ||
+            (order.mobile || '').includes(term) ||
+            (order.aadhar || '').includes(term) ||
+            (order.pan || '').toLowerCase().includes(term) ||
+            (order.date || '').includes(term)
+        );
+        renderOrderTable();
+    };
+    window.clearOrderSearch = () => { document.getElementById('searchOrderInput').value = ''; orderFiltered = []; renderOrderTable(); };
+    window.editOrder = id => window.location.href = `order.html?id=${id}`;
+    window.deleteOrder = async id => {
+        if (!confirm("Delete this order?")) return;
+        appData.orders = appData.orders.filter(o => o.id !== id);
+        await writeToFile();
+        renderOrderTable();
+        alert("Order deleted.");
+    };
+
+    // ---------- Bhav Change ----------
+    function openBhavModal() {
+        document.getElementById('rate24K').value = appData.goldRates['24K'];
+        document.getElementById('rate22K').value = appData.goldRates['22K'];
+        document.getElementById('rate18K').value = appData.goldRates['18K'];
+        document.getElementById('rate14K').value = appData.goldRates['14K'];
+        document.getElementById('rate9K').value = appData.goldRates['9K'];
+        document.getElementById('bhavModal').classList.add('active');
+    }
+    async function saveGoldRates() {
+        appData.goldRates = {
+            '24K': parseFloat(document.getElementById('rate24K').value) || 0,
+            '22K': parseFloat(document.getElementById('rate22K').value) || 0,
+            '18K': parseFloat(document.getElementById('rate18K').value) || 0,
+            '14K': parseFloat(document.getElementById('rate14K').value) || 0,
+            '9K': parseFloat(document.getElementById('rate9K').value) || 0
+        };
+        await writeToFile();
+        alert("Gold rates saved!");
+        document.getElementById('bhavModal').classList.remove('active');
+    }
+
+    // ---------- Due/Paid Statement ----------
+    function findCustomerBySearch(searchType, searchValue) {
+        const val = searchValue.trim();
+        if (!val) return null;
+        if (searchType === 'phone') {
+            if (appData.customers[val]) return { phone: val, customer: appData.customers[val] };
+            const inv = appData.invoices.find(i => i.custPhone === val);
+            if (inv && inv.custPhone) return { phone: inv.custPhone, customer: appData.customers[inv.custPhone] || null };
+            return null;
+        }
+        if (searchType === 'aadhar') {
+            for (const [phone, cust] of Object.entries(appData.customers)) {
+                if ((cust.aadhar || '').replace(/\s/g,'') === val.replace(/\s/g,'')) return { phone, customer: cust };
+            }
+            const order = appData.orders.find(o => (o.aadhar || '').replace(/\s/g,'') === val.replace(/\s/g,''));
+            if (order && order.mobile) return { phone: order.mobile, customer: appData.customers[order.mobile] || null };
+        }
+        if (searchType === 'pan') {
+            for (const [phone, cust] of Object.entries(appData.customers)) {
+                if ((cust.pan || '').toUpperCase() === val.toUpperCase()) return { phone, customer: cust };
+            }
+            const order = appData.orders.find(o => (o.pan || '').toUpperCase() === val.toUpperCase());
+            if (order && order.mobile) return { phone: order.mobile, customer: appData.customers[order.mobile] || null };
+        }
+        return null;
+    }
+
+    function fetchDuePaidStatement() {
+        const searchType = document.getElementById('dpSearchType').value;
+        const searchValue = document.getElementById('dpSearchValue').value.trim();
+        if (!searchValue) { alert("Please enter a value to search."); return; }
+        const result = findCustomerBySearch(searchType, searchValue);
+        const resultDiv = document.getElementById('statementResult');
+        if (!result) {
+            resultDiv.innerHTML = `<div style="padding:14px;background:#fff3cd;border:1px solid #ffc107;">No customer found for ${searchType}: ${searchValue}.</div>`;
+            resultDiv.style.display = 'block';
+            currentPhoneForEntry = searchType === 'phone' ? searchValue : '';
+            lastStatementData = { customer: null, phone: currentPhoneForEntry, transactions: [], totalPaid: 0, totalDue: 0 };
+            return;
+        }
+        const { phone, customer } = result;
+        currentPhoneForEntry = phone;
+        const transactions = customer && customer.ledger ? [...customer.ledger].sort((a,b) => (a.date||'').localeCompare(b.date)) : [];
+        let totalPaid = 0, totalDue = 0;
+        transactions.forEach(t => { if (t.type === 'Paid') totalPaid += t.amount; else if (t.type === 'Due') totalDue += t.amount; });
+        lastStatementData = { customer, phone, transactions, totalPaid, totalDue, custName: customer ? customer.name : '' };
+        renderStatementTable(resultDiv);
+    }
+
+    function renderStatementTable(resultDiv) {
+        const { customer, phone, transactions, totalPaid, totalDue, custName } = lastStatementData;
+        const displayName = custName || (customer ? customer.name : '') || 'Unknown';
+        let html = `<div class="cust-info-bar">
+            <div><strong>${displayName}</strong> <span style="margin-left:14px;">📞 ${phone || '-'}</span> ${customer && customer.aadhar ? `<span> Aadhar: ${customer.aadhar}</span>` : ''} ${customer && customer.pan ? `<span> PAN: ${customer.pan}</span>` : ''}</div>
+            <div>${transactions.length} transaction(s)</div>
+        </div>`;
+        if (!transactions.length) {
+            html += `<div style="padding:14px;text-align:center;border:1px solid #ddd;border-top:none;">No transactions yet.</div>`;
+        } else {
+            html += `<div style="overflow-x:auto;"><table class="statement-table">
+                <thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Remark</th><th>Actions</th></tr></thead><tbody>`;
+            transactions.forEach((t, idx) => {
+                const rowClass = t.type === 'Paid' ? 'paid-row' : 'due-row';
+                html += `<tr class="${rowClass}" id="stmtRow_${idx}">
+                    <td><input class="editable-input" value="${t.date||''}" onchange="updateEntry(${idx},'date',this.value)" style="width:100px;"></td>
+                    <td><select class="editable-select" onchange="updateEntry(${idx},'type',this.value)"><option value="Paid" ${t.type==='Paid'?'selected':''}>Paid</option><option value="Due" ${t.type==='Due'?'selected':''}>Due</option></select></td>
+                    <td><input class="editable-input" type="number" value="${t.amount||0}" step="1" onchange="updateEntry(${idx},'amount',parseFloat(this.value)||0)" style="width:95px;"></td>
+                    <td><input class="editable-input" value="${t.remark||''}" onchange="updateEntry(${idx},'remark',this.value)" placeholder="—"></td>
+                    <td><button class="btn btn-green btn-sm" onclick="saveEntryEdit(${idx})">Save</button> <button class="btn btn-red btn-sm" onclick="deleteEntry(${idx})">Del</button></td>
+                </tr>`;
+            });
+            html += `</tbody></table></div>`;
+        }
+        html += `<div class="summary-bar">
+            <span class="paid-amt">✅ Total Paid: ₹${totalPaid.toFixed(2)}</span>
+            <span class="due-amt">🔴 Total Due: ₹${totalDue.toFixed(2)}</span>
+        </div>`;
+        resultDiv.innerHTML = html;
+        resultDiv.style.display = 'block';
+    }
+
+    window.updateEntry = function(idx, field, value) {
+        if (!lastStatementData.transactions[idx]) return;
+        lastStatementData.transactions[idx][field] = value;
+        let totalPaid=0,totalDue=0;
+        lastStatementData.transactions.forEach(t => { if(t.type==='Paid') totalPaid+=t.amount; else if(t.type==='Due') totalDue+=t.amount; });
+        lastStatementData.totalPaid = totalPaid;
+        lastStatementData.totalDue = totalDue;
+    };
+    window.saveEntryEdit = async function(idx) {
+        const phone = currentPhoneForEntry;
+        if (!phone) return;
+        if (!appData.customers[phone]) appData.customers[phone] = { phone, name: lastStatementData.custName || '', ledger: [] };
+        appData.customers[phone].ledger = [...lastStatementData.transactions];
+        await writeToFile();
+        const resultDiv = document.getElementById('statementResult');
+        renderStatementTable(resultDiv);
+        renderLedgerTable();
+    };
+    window.deleteEntry = async function(idx) {
+        if (!confirm("Delete this transaction?")) return;
+        lastStatementData.transactions.splice(idx,1);
+        let totalPaid=0,totalDue=0;
+        lastStatementData.transactions.forEach(t => { if(t.type==='Paid') totalPaid+=t.amount; else if(t.type==='Due') totalDue+=t.amount; });
+        lastStatementData.totalPaid = totalPaid;
+        lastStatementData.totalDue = totalDue;
+        const phone = currentPhoneForEntry;
+        if (phone) {
+            if (!appData.customers[phone]) appData.customers[phone] = { phone, name: lastStatementData.custName || '', ledger: [] };
+            appData.customers[phone].ledger = [...lastStatementData.transactions];
+            await writeToFile();
+        }
+        const resultDiv = document.getElementById('statementResult');
+        renderStatementTable(resultDiv);
+        renderLedgerTable();
+    };
+
+    function showAddEntryForm() {
+        if (!currentPhoneForEntry && !document.getElementById('dpSearchValue').value.trim()) {
+            alert("Please search for a customer first.");
+            return;
+        }
+        document.getElementById('entryDate').value = new Date().toLocaleDateString('en-GB');
+        document.getElementById('entryAmount').value = '';
+        document.getElementById('entryRemark').value = '';
+        document.getElementById('entryForm').style.display = 'block';
+    }
+    async function saveNewEntry() {
+        let phone = currentPhoneForEntry;
+        if (!phone) {
+            phone = prompt("Enter customer phone number to save this entry:");
+            if (!phone || !phone.trim()) return;
+            phone = phone.trim();
+            currentPhoneForEntry = phone;
+        }
+        const date = document.getElementById('entryDate').value.trim();
+        if (!date) { alert("Enter a valid date."); return; }
+        const type = document.getElementById('entryType').value;
+        const amount = parseFloat(document.getElementById('entryAmount').value);
+        if (isNaN(amount) || amount <= 0) { alert("Enter a valid positive amount."); return; }
+        const remark = document.getElementById('entryRemark').value.trim();
+        if (!appData.customers[phone]) appData.customers[phone] = { phone, name: '', ledger: [] };
+        if (!appData.customers[phone].ledger) appData.customers[phone].ledger = [];
+        appData.customers[phone].ledger.push({ date, type, amount, remark });
+        await writeToFile();
+        document.getElementById('entryForm').style.display = 'none';
+        fetchDuePaidStatement();
+        renderLedgerTable();
+    }
+
+    function printStatement() {
+        const { customer, phone, transactions, totalPaid, totalDue, custName } = lastStatementData;
+        if (!transactions.length) { alert("No transactions to print."); return; }
+        const displayName = custName || (customer ? customer.name : '') || 'Customer';
+        const today = new Date().toLocaleDateString('en-GB');
+        let tableRows = '';
+        transactions.forEach(t => {
+            const color = t.type === 'Paid' ? 'green' : '#dc3545';
+            tableRows += `<tr>
+                <td>${t.date||'-'}</td>
+                <td style="color:${color};">${t.type}</td>
+                <td style="text-align:right;">₹${(t.amount||0).toFixed(2)}</td>
+                <td>${t.remark||'-'}</td>
+            </tr>`;
+        });
+        const html = `<div class="printable-bill">
+            <div class="vendor-header">
+                <div class="company-header"><div class="company-icon">JP</div><div><div class="vendor-name">J.P JEWELLERS</div><div class="vendor-sub">Gold & Silver Merchants</div></div></div>
+                <div class="vendor-details">Address: Lalganj, Bairia, Ballia – 277216 | Contact: 9919463098, 9956624200</div>
+            </div>
+            <div class="bill-title">Customer Payment Statement</div>
+            <div class="cust-details"><strong>Customer:</strong> ${displayName}<br><strong>Phone:</strong> ${phone || '-'} ${customer && customer.aadhar ? `| Aadhar: ${customer.aadhar}` : ''} ${customer && customer.pan ? `| PAN: ${customer.pan}` : ''}<br><strong>Date:</strong> ${today}</div>
+            <table class="stmt-table"><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Remark</th></tr></thead><tbody>${tableRows}</tbody></table>
+            <div class="stmt-summary">Total Paid: <span style="color:green;">₹${totalPaid.toFixed(2)}</span> | Total Due: <span style="color:#dc3545;">₹${totalDue.toFixed(2)}</span></div>
+            <div class="signature-footer"><div class="sign-box">Customer Signature<br><br><br>_________________________</div><div class="sign-box">For J.P JEWELLERS<br><br><br>_________________________<br>Authorised Signatory</div></div>
+            <div class="print-footer">This is a computer generated statement | JP Jewellers, Ballia</div>
+        </div>`;
+        const container = document.getElementById('printableBillContainer');
+        container.style.display = 'block';
+        container.innerHTML = html;
+        setTimeout(() => { window.print(); setTimeout(() => { container.innerHTML = ''; container.style.display = 'none'; }, 1500); }, 200);
+    }
+
+    // ---------- Event Listeners ----------
+    document.getElementById('changeFileBtn').onclick = () => selectNewFile();
+    document.getElementById('refreshBtn').onclick = () => { if (currentFileHandle) loadFromFile(currentFileHandle); else init(); };
+    document.getElementById('bhavBtn').onclick = openBhavModal;
+    document.getElementById('closeBhavModal').onclick = () => document.getElementById('bhavModal').classList.remove('active');
+    document.getElementById('saveBhavBtn').onclick = saveGoldRates;
+    document.getElementById('orderBillBtn').onclick = () => window.location.href = 'order.html';
+    document.getElementById('duePaidBtn').onclick = () => document.getElementById('duePaidModal').classList.add('active');
+    document.getElementById('closeDuePaidModal').onclick = () => document.getElementById('duePaidModal').classList.remove('active');
+    document.getElementById('fetchDuePaidBtn').onclick = fetchDuePaidStatement;
+    document.getElementById('printStatementBtn').onclick = printStatement;
+    document.getElementById('addEntryBtn').onclick = showAddEntryForm;
+    document.getElementById('saveEntryBtn').onclick = saveNewEntry;
+    document.getElementById('cancelEntryBtn').onclick = () => document.getElementById('entryForm').style.display = 'none';
+    document.getElementById('dpSearchValue').addEventListener('keydown', e => { if (e.key === 'Enter') fetchDuePaidStatement(); });
+
+    init();
+</script>
+</body>
+</html>

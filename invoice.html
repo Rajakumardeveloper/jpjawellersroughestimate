@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JP Jewellers | Invoice with Gold Rate</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #eef2f5;
+            font-family: 'Arial', 'Helvetica', 'Segoe UI', sans-serif;
+            padding: 15px;
+        }
+        .top-bar {
+            background: #1e466e;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            color: white;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 5px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-gold { background: #c2a15b; color: #1e466e; }
+        .btn-outline { background: transparent; border: 1px solid #c2a15b; color: #c2a15b; }
+        .btn-green { background: #28a745; color: white; }
+        .invoice-container { max-width: 1300px; width: 100%; background: white; box-shadow: 0 8px 25px rgba(0,0,0,0.1); margin: 0 auto; }
+        .invoice { padding: 20px 25px 25px 25px; background: white; }
+        .vendor-header { border: 1px solid #000; padding: 12px 15px; margin-bottom: 18px; background: #fefefe; }
+        .company-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .company-icon { width: 33px; height: 33px; border-radius: 8px; background: #1e466e; display: flex; align-items: center; justify-content: center; }
+        .company-icon .no-image { font-size: 16px; color: white; font-weight: bold; }
+        .vendor-name { font-size: 22px; font-weight: 800; color: #1e466e; }
+        .vendor-details { font-size: 10px; line-height: 1.4; color: #2c3e50; margin-top: 5px; font-weight: 600; }
+        .contact-row { margin-top: 6px; font-size: 11px; font-weight: 700; color: #1e466e; }
+        .row-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            font-weight: 600;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .estimate-h2 {
+            font-size: 18px;
+            font-weight: 900;
+            color: #c2a15b;
+            background: #1e466e;
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            letter-spacing: 1px;
+            margin: 0;
+        }
+        .invoice-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+        .meta-box { border: 1px solid #000; padding: 10px 12px; background: white; }
+        .meta-title { font-weight: 800; font-size: 12px; background: #f0f2f5; padding: 4px 8px; margin: -10px -12px 10px -12px; border-bottom: 1px solid #000; }
+        .meta-row { display: flex; margin-bottom: 8px; font-size: 11px; align-items: flex-start; flex-wrap: wrap; gap: 5px; }
+        .meta-label { width: 100px; font-weight: 700; font-size: 10px; }
+        .meta-value { flex: 1; min-width: 150px; }
+        .meta-value input, .meta-value textarea { width: 100%; padding: 4px 6px; border: 1px solid #aaa; font-size: 10px; }
+        .hint-text {
+            font-size: 8px;
+            color: #666;
+            margin-top: 2px;
+            display: block;
+        }
+        .print-address { display: none; }
+        .validation-error {
+            color: #dc3545;
+            font-size: 8px;
+            margin-top: 2px;
+            display: block;
+            font-weight: normal;
+        }
+        .payment-group { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+        .payment-group label { display: flex; align-items: center; gap: 4px; font-size: 9px; cursor: pointer; }
+        .print-payment-display { display: none; }
+        .items-wrapper { border: 1px solid #000; margin: 15px 0; overflow-x: auto; }
+        .items-table { width: 100%; border-collapse: collapse; font-size: 9px; }
+        .items-table th, .items-table td { border: 1px solid #000; padding: 6px 4px; text-align: center; vertical-align: middle; }
+        .items-table th { background: #e9ecef; font-weight: 800; font-size: 8px; }
+        .items-table input, .items-table select { width: 100%; padding: 3px; border: 1px solid #ccc; font-size: 9px; text-align: center; }
+        .delete-row-btn { background: #dc3545; color: white; border: none; padding: 5px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        .add-item-btn { background: #28a745; color: white; border: none; padding: 6px 14px; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: bold; margin-bottom: 10px; }
+        .totals-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 18px; margin: 15px 0; }
+        .tax-card, .amount-card { border: 1px solid #000; padding: 10px 12px; background: white; }
+        .tax-card h5, .amount-card h5 { background: #e9ecef; margin: -10px -12px 10px -12px; padding: 6px 10px; border-bottom: 1px solid #000; font-size: 11px; font-weight: 800; }
+        .tax-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 10px; font-weight: 600; }
+        .grand-total-row { border-top: 2px solid #000; margin-top: 8px; padding-top: 6px; font-weight: 800; font-size: 13px; }
+        .words-box { background: #f8f9fa; padding: 8px; margin-top: 10px; font-size: 10px; font-weight: 700; border-left: 3px solid #1e466e; }
+        .signature-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 20px 0 15px; border-top: 1px solid #000; padding-top: 15px; }
+        .sign-box { border: 1px solid #000; padding: 12px; min-height: 70px; text-align: center; font-size: 10px; font-weight: 700; }
+        .ledger-container { margin-top: 6px; border: 1px solid #ddd; border-radius: 4px; background: #fefefe; }
+        .ledger-header { display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; background: #f0f2f5; font-size: 9px; font-weight: bold; border-bottom: 1px solid #ddd; }
+        .ledger-list { max-height: 100px; overflow-y: auto; font-size: 8px; }
+        .ledger-item { display: flex; justify-content: space-between; padding: 3px 6px; border-bottom: 1px solid #eee; }
+        .ledger-item .date { width: 70px; }
+        .ledger-item .type { width: 40px; font-weight: bold; }
+        .ledger-item .amount { width: 60px; text-align: right; }
+        .delete-ledger { background: none; border: none; color: #dc3545; cursor: pointer; font-size: 10px; }
+        .add-ledger-btn { background: #28a745; color: white; border: none; border-radius: 3px; padding: 2px 6px; font-size: 10px; cursor: pointer; margin: 3px; }
+        .ledger-summary { font-size: 8px; padding: 3px 6px; background: #e9ecef; text-align: right; font-weight: bold; }
+
+        @media print {
+            .top-bar, .add-item-btn, .delete-row-btn, .payment-group, .add-ledger-btn, .delete-ledger, .ledger-container .delete-ledger, select, button, .hint-text, .validation-error {
+                display: none !important;
+            }
+            .print-payment-display {
+                display: block !important;
+                margin-top: 5px;
+                font-weight: bold;
+                font-size: 10px;
+            }
+            .items-table th:last-child, .items-table td:last-child { display: none !important; }
+            .items-table input, .items-table select { display: none !important; }
+            .print-only-text {
+                display: inline-block !important;
+            }
+            .address-textarea { display: none !important; }
+            .print-address { display: block !important; margin-top: 2px; font-weight: normal; }
+            input, textarea {
+                border: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+                font-size: 9px !important;
+                color: black !important;
+                font-weight: 600 !important;
+                display: inline-block !important;
+                width: auto !important;
+            }
+            .meta-row.pan-row[data-empty="true"], .meta-row.aadhar-row[data-empty="true"] { display: none !important; }
+            .vendor-header, .meta-box, .tax-card, .amount-card, .sign-box { border: 1px solid black !important; }
+            .items-table th, .items-table td { border: 1px solid black !important; }
+            @page { margin: 0; size: A4; }
+            body { margin: 0; padding: 0; background: white; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <h2>📄 JP JEWELLERS | Invoice</h2>
+    <div>
+        <button class="btn btn-outline" onclick="window.location.href='index.html'">← Dashboard</button>
+        <button class="btn btn-gold" id="printBtn">🖨️ Print</button>
+        <button class="btn btn-green" id="saveBtn">💾 Save to Pendrive</button>
+    </div>
+</div>
+
+<div class="invoice-container">
+    <div class="invoice" id="invoiceForm"></div>
+</div>
+
+<script>
+    let currentFileHandle = null;
+    let appData = { invoices: [], customers: {}, goldRates: { '24K': 0, '22K': 0, '18K': 0, '14K': 0, '9K': 0 } };
+    let itemsData = [];
+    let currentEditingId = null;
+
+    const DB_NAME = 'JPJewellersFileHandleDB';
+    const STORE_NAME = 'fileHandleStore';
+    const KEY_NAME = 'handle';
+
+    async function getStoredFileHandle() {
+        return new Promise((resolve) => {
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onupgradeneeded = () => { const db = request.result; if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME); };
+            request.onsuccess = () => {
+                const db = request.result;
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const getReq = store.get(KEY_NAME);
+                getReq.onsuccess = () => resolve(getReq.result || null);
+                getReq.onerror = () => resolve(null);
+            };
+            request.onerror = () => resolve(null);
+        });
+    }
+
+    async function ensureWritePermission(handle) {
+        if (await handle.queryPermission({ mode: 'readwrite' }) === 'granted') return true;
+        const perm = await handle.requestPermission({ mode: 'readwrite' });
+        return perm === 'granted';
+    }
+
+    async function loadDataFromHandle(handle) {
+        try {
+            const file = await handle.getFile();
+            const text = await file.text();
+            if (text.trim()) {
+                const parsed = JSON.parse(text);
+                appData.invoices = parsed.invoices || [];
+                appData.customers = parsed.customers || {};
+                appData.goldRates = parsed.goldRates || { '24K': 0, '22K': 0, '18K': 0, '14K': 0, '9K': 0 };
+            } else {
+                appData = { invoices: [], customers: {}, goldRates: { '24K': 0, '22K': 0, '18K': 0, '14K': 0, '9K': 0 } };
+            }
+            currentFileHandle = handle;
+            return true;
+        } catch(e) { console.error(e); return false; }
+    }
+
+    async function writeToFile() {
+        if (!currentFileHandle) { alert("No file selected."); return false; }
+        const hasPerm = await ensureWritePermission(currentFileHandle);
+        if (!hasPerm) { alert("Permission lost. Please re-select file."); return false; }
+        try {
+            const writable = await currentFileHandle.createWritable();
+            await writable.write(JSON.stringify({ invoices: appData.invoices, customers: appData.customers, goldRates: appData.goldRates }, null, 2));
+            await writable.close();
+            return true;
+        } catch(e) { alert("Error writing: " + e.message); return false; }
+    }
+
+    function toNum(v, d=0) { let n=parseFloat(v); return isNaN(n)?d:n; }
+    function numToWords(n) {
+        if (n===0) return "Zero Rupees Only";
+        const u=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+        const t=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+        function u100(num) { return num<20 ? u[num] : t[Math.floor(num/10)] + (num%10?' '+u[num%10]:''); }
+        function convert(num) {
+            if (!num) return '';
+            let r='';
+            if (num>=10000000) { r+=convert(Math.floor(num/10000000))+' Crore '; num%=10000000; }
+            if (num>=100000) { r+=convert(Math.floor(num/100000))+' Lakh '; num%=100000; }
+            if (num>=1000) { r+=convert(Math.floor(num/1000))+' Thousand '; num%=1000; }
+            if (num>=100) { r+=u[Math.floor(num/100)]+' Hundred '; num%=100; }
+            if (num) r+=u100(num);
+            return r.trim();
+        }
+        return convert(n)+' Rupees Only';
+    }
+
+    function autoSetMakingType(row) {
+        const p = (row.purity || '').toLowerCase();
+        if (p.includes('gold')) { row.makingType = 'percentage'; if (!row.makingPercent) row.makingPercent = 12; }
+        else if (p.includes('silver')) { row.makingType = 'fixed'; if (!row.makingFixed) row.makingFixed = 150; }
+    }
+
+    function getGoldRateForPurity(purity) {
+        if (purity.includes('24K')) return appData.goldRates['24K'];
+        if (purity.includes('22K')) return appData.goldRates['22K'];
+        if (purity.includes('18K')) return appData.goldRates['18K'];
+        if (purity.includes('14K')) return appData.goldRates['14K'];
+        if (purity.includes('9K')) return appData.goldRates['9K'];
+        return null;
+    }
+
+    function validateAadhar(aadharValue) {
+        if (!aadharValue || aadharValue.trim() === '') return { valid: true, error: '' };
+        const cleaned = aadharValue.replace(/\D/g, '');
+        const isValid = /^\d{12}$/.test(cleaned);
+        return { valid: isValid, error: isValid ? '' : 'Aadhar must be exactly 12 digits (0-9 only)' };
+    }
+
+    function validatePAN(panValue) {
+        if (!panValue || panValue.trim() === '') return { valid: true, error: '' };
+        const upperPan = panValue.toUpperCase().trim();
+        const isValid = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(upperPan);
+        return { valid: isValid, error: isValid ? '' : 'PAN format: 5 letters, 4 digits, 1 letter (e.g., ABCDE1234F)' };
+    }
+
+    function setupFieldValidation() {
+        const aadharInput = document.getElementById('modalCustAadhar');
+        const panInput = document.getElementById('modalCustPan');
+        
+        if (aadharInput) {
+            let errorSpan = aadharInput.parentNode.querySelector('.validation-error');
+            if (!errorSpan) {
+                errorSpan = document.createElement('span');
+                errorSpan.className = 'validation-error';
+                aadharInput.parentNode.appendChild(errorSpan);
+            }
+            const updateAadharError = () => {
+                const val = aadharInput.value;
+                const result = validateAadhar(val);
+                errorSpan.innerText = result.error;
+                errorSpan.style.color = result.valid ? 'transparent' : '#dc3545';
+                if (!result.valid && val.trim() !== '') aadharInput.style.borderColor = '#dc3545';
+                else aadharInput.style.borderColor = '#aaa';
+                return result.valid;
+            };
+            aadharInput.addEventListener('input', (e) => {
+                let raw = e.target.value.replace(/\D/g, '').slice(0, 12);
+                e.target.value = raw;
+                updateAadharError();
+            });
+            aadharInput.addEventListener('blur', updateAadharError);
+            updateAadharError();
+        }
+
+        if (panInput) {
+            let errorSpanPan = panInput.parentNode.querySelector('.validation-error');
+            if (!errorSpanPan) {
+                errorSpanPan = document.createElement('span');
+                errorSpanPan.className = 'validation-error';
+                panInput.parentNode.appendChild(errorSpanPan);
+            }
+            const updatePanError = () => {
+                let raw = panInput.value.toUpperCase();
+                const result = validatePAN(raw);
+                if (result.valid) {
+                    errorSpanPan.innerText = '';
+                    panInput.style.borderColor = '#aaa';
+                } else {
+                    errorSpanPan.innerText = result.error;
+                    panInput.style.borderColor = '#dc3545';
+                }
+                return result.valid;
+            };
+            panInput.addEventListener('input', (e) => {
+                let raw = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                if (raw.length > 10) raw = raw.slice(0,10);
+                e.target.value = raw;
+                updatePanError();
+            });
+            panInput.addEventListener('blur', updatePanError);
+            updatePanError();
+        }
+    }
+
+    function areCustomerDocsValid() {
+        const aadhar = document.getElementById('modalCustAadhar')?.value || '';
+        const pan = document.getElementById('modalCustPan')?.value || '';
+        const aadharValid = validateAadhar(aadhar).valid;
+        const panValid = validatePAN(pan).valid;
+        if (!aadharValid) alert('Please enter valid 12-digit Aadhar number (optional but must be correct if filled).');
+        if (!panValid) alert('Please enter valid PAN (format: 5 letters, 4 digits, 1 letter). Leave blank if not applicable.');
+        return aadharValid && panValid;
+    }
+
+    function recalcModalTotals() {
+        let totalNetVal = 0, totalMaking = 0, totalHM = 0, subTotal = 0;
+        for (let row of itemsData) {
+            let gross = row.grossWt || 0, stone = row.stoneWt || 0;
+            let netWt = Math.max(0, gross - stone);
+            row.netWt = netWt;
+            let rate = row.ratePerGram || 0;
+            let netVal = netWt * rate;
+            let making = row.makingType === 'percentage' ? netVal * ((row.makingPercent || 12)/100) : (row.makingFixed || 0);
+            let hm = row.hmAmount || 0;
+            row.makingValue = making;
+            row.hmValue = hm;
+            let rowTotal = netVal + making + hm;
+            row.rowTotal = rowTotal;
+            totalNetVal += netVal;
+            totalMaking += making;
+            totalHM += hm;
+            subTotal += rowTotal;
+        }
+        const discount = parseFloat(document.getElementById('modalDiscount')?.value) || 0;
+        const grandTotal = Math.max(0, subTotal - discount);
+        document.getElementById('modalTotalNetVal').innerText = '₹' + totalNetVal.toFixed(2);
+        document.getElementById('modalTotalMaking').innerText = '₹' + totalMaking.toFixed(2);
+        document.getElementById('modalTotalHM').innerText = '₹' + totalHM.toFixed(2);
+        document.getElementById('modalSubTotal').innerText = '₹' + subTotal.toFixed(2);
+        document.getElementById('modalDiscountShow').innerText = '₹' + discount.toFixed(2);
+        document.getElementById('modalGrandTotal').innerText = '₹' + grandTotal.toFixed(2);
+        document.getElementById('modalAmountWords').innerText = numToWords(Math.floor(grandTotal));
+        const rows = document.querySelectorAll('#modalItemsBody tr');
+        for (let i=0; i<itemsData.length && i<rows.length; i++) {
+            const netCell = rows[i].cells[5];
+            if (netCell) netCell.innerText = itemsData[i].netWt.toFixed(3);
+        }
+    }
+
+    function buildInvoiceHTML() {
+        const container = document.getElementById('invoiceForm');
+        const today = new Date().toLocaleDateString('en-GB');
+        container.innerHTML = `
+            <div class="vendor-header">
+                <div class="company-header">
+                    <div class="company-icon"><div class="no-image">JP</div></div>
+                    <div class="vendor-name">J.P JEWELLERS - Gold & Silver Merchants</div>
+                </div>
+                <div class="vendor-details">
+                    <strong>Sold By:</strong> JP JEWELLERS<br>
+                    <strong>Address:</strong> Lalganj, Bairia, Ballia - 277216
+                </div>
+                <div class="contact-row">
+                    <strong>Contact:</strong> 9919463098 , 9956624200
+                </div>
+                <div class="row-flex">
+                    <span><strong>DATE:</strong> <span id="modalInvoiceDate">${today}</span></span>
+                    <h2 class="estimate-h2">ROUGH ESTIMATE</h2>
+                </div>
+            </div>
+            <div class="invoice-meta">
+                <div class="meta-box"><div class="meta-title">Billing Address</div>
+                    <div class="meta-row"><div class="meta-label">Customer Name *</div><div class="meta-value"><input type="text" id="modalCustName" placeholder="Full Name"></div></div>
+                    <div class="meta-row"><div class="meta-label">Address</div><div class="meta-value">
+                        <textarea id="modalCustAddress" class="address-textarea" rows="3" placeholder="Street, City, District, State - PIN Code"></textarea>
+                        <span class="print-address" id="printAddressSpan"></span>
+                    </div></div>
+                    <div class="meta-row"><div class="meta-label">Phone Number *</div><div class="meta-value"><input type="tel" id="modalCustPhone" maxlength="10" placeholder="10 digit mobile" onchange="onPhoneChange()"></div></div>
+                    <div class="meta-row pan-row" id="panRow">
+                        <div class="meta-label">PAN Number</div>
+                        <div class="meta-value">
+                            <input type="text" id="modalCustPan" placeholder="ABCDE1234F">
+                            <span class="hint-text">Format: 5 letters, 4 digits, 1 letter (e.g., ABCDE1234F)</span>
+                        </div>
+                    </div>
+                    <div class="meta-row aadhar-row" id="aadharRow">
+                        <div class="meta-label">Aadhar Number</div>
+                        <div class="meta-value">
+                            <input type="text" id="modalCustAadhar" placeholder="12 digit number" maxlength="12">
+                            <span class="hint-text">Exactly 12 digits (0-9 only)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="meta-box"><div class="meta-title">Shipping Details & Ledger</div>
+                    <div class="meta-row"><div class="meta-label">Date</div><div class="meta-value"><input type="text" id="modalBillDate" value="${today}" readonly style="background:#f0f0f0;"></div></div>
+                    <div class="meta-row"><div class="meta-label">Payment Mode</div><div class="meta-value">
+                        <div class="payment-group" id="modalPaymentGroup">
+                            <label><input type="checkbox" value="Cash"> Cash</label><label><input type="checkbox" value="UPI"> UPI</label><label><input type="checkbox" value="Card"> Card</label>
+                            <label><input type="checkbox" value="Bank Transfer"> Bank Transfer</label><label><input type="checkbox" value="Net Banking"> Net Banking</label>
+                            <label><input type="checkbox" value="Cheque"> Cheque</label><label><input type="checkbox" value="Wallet"> Wallet</label>
+                        </div>
+                        <div class="print-payment-display" id="printPaymentDisplay"></div>
+                    </div></div>
+                    <div class="meta-row"><div class="meta-label">Place of Supply</div><div class="meta-value"><input type="text" id="modalPlaceSupply" placeholder="Enter State"></div></div>
+                    <div class="meta-row"><div class="meta-label">Discount (₹)</div><div class="meta-value"><input type="number" id="modalDiscount" value="0" step="1" oninput="recalcModalTotals()"></div></div>
+                    <div class="meta-row"><div class="meta-label">Payment Ledger</div><div class="meta-value"><div id="ledgerContainer"></div></div></div>
+                </div>
+            </div>
+            <div class="items-wrapper"><table class="items-table"><thead><tr><th>SL</th><th>Item Description</th><th>Purity</th><th>Gross Wt (g)</th><th>Stone Wt (g)</th><th>Net Wt (g)</th><th>Rate/g (₹)</th><th>Making Type</th><th>Making %/₹</th><th>HM (₹)</th><th>Action</th></tr></thead><tbody id="modalItemsBody"></tbody></table></div>
+            <button type="button" class="add-item-btn" onclick="addModalItem()">+ Add Item</button>
+            <div class="totals-grid"><div class="tax-card"><h5>Bill Summary</h5>
+                <div class="tax-row"><span>Total Net Value :</span><span id="modalTotalNetVal">₹0.00</span></div>
+                <div class="tax-row"><span>Total Making Charges :</span><span id="modalTotalMaking">₹0.00</span></div>
+                <div class="tax-row"><span>Total Hallmark (₹) :</span><span id="modalTotalHM">₹0.00</span></div>
+                <div class="tax-row"><span>Sub Total :</span><span id="modalSubTotal">₹0.00</span></div>
+                <div class="tax-row"><span>Discount :</span><span id="modalDiscountShow">₹0.00</span></div>
+                <div class="tax-row grand-total-row"><span>GRAND TOTAL :</span><span id="modalGrandTotal">₹0.00</span></div></div>
+                <div class="amount-card"><h5>Amount in Words</h5><div class="words-box" id="modalAmountWords">Zero Rupees Only</div></div>
+            </div>
+            <div class="signature-footer"><div class="sign-box">Customer Signature<br><br>_________________________</div><div class="sign-box">For J.P JEWELLERS<br><br>_________________________<br>Authorised Signatory</div></div>
+            <div style="font-size:7px; text-align:center; border-top:1px solid #ccc; padding-top:5px;">This is a computer generated bill</div>
+        `;
+        if (!itemsData.length) addModalItem();
+        else renderModalItems();
+        recalcModalTotals();
+        updatePrintPaymentDisplay();
+        setupFieldValidation();
+        const addrTextarea = document.getElementById('modalCustAddress');
+        const printSpan = document.getElementById('printAddressSpan');
+        if (addrTextarea && printSpan) {
+            const syncAddress = () => { printSpan.innerText = addrTextarea.value; };
+            addrTextarea.addEventListener('input', syncAddress);
+            syncAddress();
+        }
+    }
+
+    function updatePrintPaymentDisplay() {
+        let selected = [];
+        document.querySelectorAll('#modalPaymentGroup input:checked').forEach(cb => selected.push(cb.value));
+        document.getElementById('printPaymentDisplay').innerHTML = selected.join(', ') || 'Not Selected';
+    }
+
+    window.addModalItem = function() {
+        itemsData.push({
+            itemDesc: '', purity: '22K (Gold)', grossWt: 0, stoneWt: 0, netWt: 0, ratePerGram: 0,
+            makingType: 'percentage', makingPercent: 12, makingFixed: 150, makingValue: 0,
+            hmAmount: 0, hmValue: 0, rowTotal: 0
+        });
+        renderModalItems();
+        recalcModalTotals();
+    };
+    window.removeModalItem = function(idx) { itemsData.splice(idx,1); renderModalItems(); recalcModalTotals(); };
+
+    function renderModalItems() {
+        const tbody = document.getElementById('modalItemsBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        itemsData.forEach((row, i) => {
+            const tr = tbody.insertRow();
+            tr.insertCell().innerText = i+1;
+            const tdDesc = tr.insertCell();
+            const inpDesc = document.createElement('input'); inpDesc.type='text'; inpDesc.value=row.itemDesc; inpDesc.placeholder='Item name';
+            const descPrint = document.createElement('span'); descPrint.className='print-only-text'; descPrint.style.display='none'; descPrint.innerText = row.itemDesc;
+            const updateDescPrint = () => { descPrint.innerText = row.itemDesc; };
+            inpDesc.oninput = (e) => { row.itemDesc = e.target.value; updateDescPrint(); recalcModalTotals(); };
+            tdDesc.appendChild(inpDesc);
+            tdDesc.appendChild(descPrint);
+            const tdPur = tr.insertCell();
+            const selPur = document.createElement('select');
+            const purityOpts = ['24K (Gold)','22K (Gold)','18K (Gold)','14K (Gold)','9K (Gold)','Gold Ornaments','Silver 999','Silver Ornaments'];
+            purityOpts.forEach(p => {
+                const opt = document.createElement('option'); opt.value=p; opt.innerText=p;
+                if (row.purity===p) opt.selected=true;
+                selPur.appendChild(opt);
+            });
+            const purPrint = document.createElement('span'); purPrint.className='print-only-text'; purPrint.style.display='none'; purPrint.innerText = row.purity;
+            const updatePurPrint = () => { purPrint.innerText = row.purity; };
+            selPur.onchange = (e) => {
+                row.purity = e.target.value;
+                autoSetMakingType(row);
+                const goldRate = getGoldRateForPurity(row.purity);
+                if (goldRate !== null && goldRate > 0) {
+                    const rateInput = tr.cells[6].querySelector('input');
+                    if (rateInput) {
+                        row.ratePerGram = goldRate;
+                        rateInput.value = goldRate;
+                        const ratePrintSpan = tr.cells[6].querySelector('.print-only-text');
+                        if (ratePrintSpan) ratePrintSpan.innerText = goldRate;
+                    }
+                }
+                const makingSelect = tr.cells[7].querySelector('select');
+                if (makingSelect) makingSelect.value = row.makingType;
+                const makingInput = tr.cells[8].querySelector('input');
+                if (makingInput) {
+                    if (row.makingType === 'percentage') { makingInput.value = row.makingPercent; makingInput.placeholder = '%'; }
+                    else { makingInput.value = row.makingFixed; makingInput.placeholder = '₹'; }
+                }
+                const typePrintSpan = tr.cells[7].querySelector('.print-only-text');
+                if (typePrintSpan) typePrintSpan.innerText = row.makingType === 'percentage' ? 'Gold %' : 'Fixed ₹';
+                const valPrintSpan = tr.cells[8].querySelector('.print-only-text');
+                if (valPrintSpan) {
+                    if (row.makingType === 'percentage') valPrintSpan.innerText = (row.makingPercent || 12) + '%';
+                    else valPrintSpan.innerText = '₹' + (row.makingFixed || 150);
+                }
+                updatePurPrint();
+                recalcModalTotals();
+            };
+            tdPur.appendChild(selPur);
+            tdPur.appendChild(purPrint);
+            const tdGr = tr.insertCell();
+            const inpGr = document.createElement('input'); inpGr.type='number'; inpGr.step='0.01'; inpGr.value=row.grossWt;
+            const grPrint = document.createElement('span'); grPrint.className='print-only-text'; grPrint.style.display='none'; grPrint.innerText = row.grossWt;
+            const updateGrPrint = () => { grPrint.innerText = row.grossWt; };
+            inpGr.oninput = (e) => { row.grossWt = parseFloat(e.target.value)||0; updateGrPrint(); recalcModalTotals(); };
+            tdGr.appendChild(inpGr);
+            tdGr.appendChild(grPrint);
+            const tdSt = tr.insertCell();
+            const inpSt = document.createElement('input'); inpSt.type='number'; inpSt.step='0.01'; inpSt.value=row.stoneWt;
+            const stPrint = document.createElement('span'); stPrint.className='print-only-text'; stPrint.style.display='none'; stPrint.innerText = row.stoneWt;
+            const updateStPrint = () => { stPrint.innerText = row.stoneWt; };
+            inpSt.oninput = (e) => { row.stoneWt = parseFloat(e.target.value)||0; updateStPrint(); recalcModalTotals(); };
+            tdSt.appendChild(inpSt);
+            tdSt.appendChild(stPrint);
+            const tdNet = tr.insertCell(); tdNet.style.fontWeight='bold';
+            const tdRate = tr.insertCell();
+            const inpRate = document.createElement('input'); inpRate.type='number'; inpRate.step='10'; inpRate.value=row.ratePerGram;
+            const ratePrint = document.createElement('span'); ratePrint.className='print-only-text'; ratePrint.style.display='none'; ratePrint.innerText = row.ratePerGram;
+            const updateRatePrint = () => { ratePrint.innerText = row.ratePerGram; };
+            inpRate.oninput = (e) => { row.ratePerGram = parseFloat(e.target.value)||0; updateRatePrint(); recalcModalTotals(); };
+            tdRate.appendChild(inpRate);
+            tdRate.appendChild(ratePrint);
+            const tdMType = tr.insertCell();
+            const selType = document.createElement('select');
+            const optP = document.createElement('option'); optP.value='percentage'; optP.innerText='Gold %';
+            const optF = document.createElement('option'); optF.value='fixed'; optF.innerText='Fixed ₹';
+            selType.appendChild(optP); selType.appendChild(optF);
+            selType.value = row.makingType;
+            const typePrintSpan = document.createElement('span'); typePrintSpan.className='print-only-text'; typePrintSpan.style.display='none'; typePrintSpan.style.fontWeight='bold'; typePrintSpan.style.background='#e9ecef'; typePrintSpan.style.padding='2px 6px'; typePrintSpan.style.borderRadius='3px';
+            const updateTypePrint = () => { typePrintSpan.innerText = row.makingType === 'percentage' ? 'Gold %' : 'Fixed ₹'; };
+            updateTypePrint();
+            selType.onchange = (e) => {
+                row.makingType = e.target.value;
+                const makeInput = tr.cells[8].querySelector('input');
+                if (makeInput) {
+                    if (row.makingType === 'percentage') { makeInput.value = row.makingPercent || 12; makeInput.placeholder = '%'; }
+                    else { makeInput.value = row.makingFixed || 150; makeInput.placeholder = '₹'; }
+                }
+                updateTypePrint();
+                const valPrintSpan = tr.cells[8].querySelector('.print-only-text');
+                if (valPrintSpan) {
+                    if (row.makingType === 'percentage') valPrintSpan.innerText = (row.makingPercent || 12) + '%';
+                    else valPrintSpan.innerText = '₹' + (row.makingFixed || 150);
+                }
+                recalcModalTotals();
+            };
+            tdMType.appendChild(selType);
+            tdMType.appendChild(typePrintSpan);
+            const tdMVal = tr.insertCell();
+            const inpMake = document.createElement('input'); inpMake.type='number'; inpMake.step='0.1';
+            const valPrintSpan = document.createElement('span'); valPrintSpan.className='print-only-text'; valPrintSpan.style.display='none'; valPrintSpan.style.fontWeight='bold';
+            const updateValPrint = () => {
+                if (row.makingType === 'percentage') valPrintSpan.innerText = (row.makingPercent || 12) + '%';
+                else valPrintSpan.innerText = '₹' + (row.makingFixed || 150);
+            };
+            if (row.makingType === 'percentage') { inpMake.value = row.makingPercent || 12; inpMake.placeholder = '%'; }
+            else { inpMake.value = row.makingFixed || 150; inpMake.placeholder = '₹'; }
+            updateValPrint();
+            inpMake.oninput = (e) => {
+                const v = parseFloat(e.target.value) || 0;
+                if (row.makingType === 'percentage') row.makingPercent = v;
+                else row.makingFixed = v;
+                updateValPrint();
+                recalcModalTotals();
+            };
+            tdMVal.appendChild(inpMake);
+            tdMVal.appendChild(valPrintSpan);
+            const tdHM = tr.insertCell();
+            const inpHM = document.createElement('input'); inpHM.type='number'; inpHM.step='1'; inpHM.value=row.hmAmount || 0; inpHM.placeholder='₹';
+            const hmPrint = document.createElement('span'); hmPrint.className='print-only-text'; hmPrint.style.display='none'; hmPrint.innerText = '₹' + (row.hmAmount || 0);
+            const updateHmPrint = () => { hmPrint.innerText = '₹' + (row.hmAmount || 0); };
+            inpHM.oninput = (e) => { row.hmAmount = parseFloat(e.target.value) || 0; updateHmPrint(); recalcModalTotals(); };
+            tdHM.appendChild(inpHM);
+            tdHM.appendChild(hmPrint);
+            const tdDel = tr.insertCell();
+            const delBtn = document.createElement('button'); delBtn.innerText='✕'; delBtn.className='delete-row-btn';
+            delBtn.onclick = () => window.removeModalItem(i);
+            tdDel.appendChild(delBtn);
+        });
+        recalcModalTotals();
+    }
+
+    function ensureCustomer(phone, name, address) {
+        if (!phone) return;
+        if (!appData.customers[phone]) appData.customers[phone] = { phone, name: name || '', address: address || '', pan: '', aadhar: '', ledger: [] };
+        if (!appData.customers[phone].ledger) appData.customers[phone].ledger = [];
+        return appData.customers[phone];
+    }
+
+    function renderLedger(phone) {
+        const container = document.getElementById('ledgerContainer');
+        if (!container) return;
+        if (!phone) { container.innerHTML = '<div style="font-size:9px;">Enter phone number to add ledger entries</div>'; return; }
+        const cust = appData.customers[phone];
+        const ledger = cust ? (cust.ledger || []) : [];
+        if (ledger.length === 0) {
+            container.innerHTML = '<div class="ledger-container"><div class="ledger-header">Payment Ledger <button class="add-ledger-btn" onclick="showAddLedgerModal()">+</button></div><div class="ledger-list">No entries</div></div>';
+            return;
+        }
+        let html = '<div class="ledger-container"><div class="ledger-header">Payment Ledger <button class="add-ledger-btn" onclick="showAddLedgerModal()">+</button></div><div class="ledger-list">';
+        ledger.forEach((entry, idx) => {
+            html += `<div class="ledger-item"><span class="date">${entry.date}</span><span class="type" style="color:${entry.type === 'Paid' ? 'green' : 'red'}">${entry.type}</span><span class="amount">₹${entry.amount.toFixed(2)}</span><button class="delete-ledger" onclick="deleteLedgerEntry('${phone}', ${idx})">✕</button></div>`;
+        });
+        const totalPaid = ledger.filter(e => e.type === 'Paid').reduce((s, e) => s + e.amount, 0);
+        const totalDue = ledger.filter(e => e.type === 'Due').reduce((s, e) => s + e.amount, 0);
+        html += `</div><div class="ledger-summary">💰 Paid: ₹${totalPaid.toFixed(2)} | Due: ₹${totalDue.toFixed(2)}</div></div>`;
+        container.innerHTML = html;
+    }
+
+    window.showAddLedgerModal = async function() {
+        const phone = document.getElementById('modalCustPhone').value.trim();
+        if (!phone) { alert("Enter customer phone number first"); return; }
+        const date = prompt("Date (DD/MM/YYYY):", new Date().toLocaleDateString('en-GB'));
+        if (!date) return;
+        const type = prompt("Type (Paid / Due):", "Paid");
+        if (!type || (type.toLowerCase() !== 'paid' && type.toLowerCase() !== 'due')) { alert("Type must be Paid or Due"); return; }
+        const amount = parseFloat(prompt("Amount (₹):", "0"));
+        if (isNaN(amount) || amount <= 0) { alert("Invalid amount"); return; }
+        const remark = prompt("Remark (optional):", "");
+        const cust = ensureCustomer(phone, document.getElementById('modalCustName').value, document.getElementById('modalCustAddress').value);
+        cust.ledger.push({ date, type: type.charAt(0).toUpperCase() + type.slice(1).toLowerCase(), amount, remark: remark || '' });
+        await writeToFile();
+        renderLedger(phone);
+    };
+
+    window.deleteLedgerEntry = async function(phone, idx) {
+        if (!confirm("Delete this entry?")) return;
+        const cust = appData.customers[phone];
+        if (cust && cust.ledger && cust.ledger[idx]) {
+            cust.ledger.splice(idx, 1);
+            await writeToFile();
+            renderLedger(phone);
+        }
+    };
+
+    window.onPhoneChange = function() {
+        const phone = document.getElementById('modalCustPhone').value.trim();
+        if (phone) {
+            const cust = appData.customers[phone];
+            if (cust) {
+                document.getElementById('modalCustName').value = cust.name || '';
+                document.getElementById('modalCustAddress').value = cust.address || '';
+                const printSpan = document.getElementById('printAddressSpan');
+                if (printSpan) printSpan.innerText = cust.address || '';
+                document.getElementById('modalCustPan').value = cust.pan || '';
+                document.getElementById('modalCustAadhar').value = cust.aadhar || '';
+                setupFieldValidation();
+            }
+            renderLedger(phone);
+        } else { renderLedger(''); }
+    };
+
+    function prepareForPrint() {
+        const panInput = document.getElementById('modalCustPan');
+        const panRow = document.getElementById('panRow');
+        if (panRow) panRow.setAttribute('data-empty', !panInput || panInput.value.trim() === '');
+        const aadharInput = document.getElementById('modalCustAadhar');
+        const aadharRow = document.getElementById('aadharRow');
+        if (aadharRow) aadharRow.setAttribute('data-empty', !aadharInput || aadharInput.value.trim() === '');
+        const addrTextarea = document.getElementById('modalCustAddress');
+        const printSpan = document.getElementById('printAddressSpan');
+        if (addrTextarea && printSpan) printSpan.innerText = addrTextarea.value;
+        updatePrintPaymentDisplay();
+        for (let i = 0; i < itemsData.length; i++) {
+            const row = itemsData[i];
+            const tr = document.querySelectorAll('#modalItemsBody tr')[i];
+            if (tr && tr.cells) {
+                const typeSpan = tr.cells[7]?.querySelector('.print-only-text');
+                if (typeSpan) typeSpan.innerText = row.makingType === 'percentage' ? 'Gold %' : 'Fixed ₹';
+                const valSpan = tr.cells[8]?.querySelector('.print-only-text');
+                if (valSpan) {
+                    if (row.makingType === 'percentage') valSpan.innerText = (row.makingPercent || 12) + '%';
+                    else valSpan.innerText = '₹' + (row.makingFixed || 150);
+                }
+                const hmSpan = tr.cells[9]?.querySelector('.print-only-text');
+                if (hmSpan) hmSpan.innerText = '₹' + (row.hmAmount || 0);
+                const descSpan = tr.cells[1]?.querySelector('.print-only-text');
+                if (descSpan) descSpan.innerText = row.itemDesc;
+                const purSpan = tr.cells[2]?.querySelector('.print-only-text');
+                if (purSpan) purSpan.innerText = row.purity;
+                const grossSpan = tr.cells[3]?.querySelector('.print-only-text');
+                if (grossSpan) grossSpan.innerText = row.grossWt;
+                const stoneSpan = tr.cells[4]?.querySelector('.print-only-text');
+                if (stoneSpan) stoneSpan.innerText = row.stoneWt;
+                const rateSpan = tr.cells[6]?.querySelector('.print-only-text');
+                if (rateSpan) rateSpan.innerText = row.ratePerGram;
+            }
+        }
+    }
+
+    async function saveCurrentInvoice() {
+        if (!areCustomerDocsValid()) return;
+        const custName = document.getElementById('modalCustName').value.trim();
+        const custPhone = document.getElementById('modalCustPhone').value.trim();
+        if (!custName || !custPhone) { alert("Customer Name and Phone are required"); return; }
+        if (!itemsData.length) { alert("Add at least one item"); return; }
+        const custPan = document.getElementById('modalCustPan').value.trim().toUpperCase();
+        const custAadhar = document.getElementById('modalCustAadhar').value.trim();
+        let cust = appData.customers[custPhone];
+        if (!cust) {
+            cust = { phone: custPhone, name: custName, address: document.getElementById('modalCustAddress').value, pan: custPan, aadhar: custAadhar, ledger: [] };
+            appData.customers[custPhone] = cust;
+        } else {
+            cust.name = custName;
+            cust.address = document.getElementById('modalCustAddress').value;
+            cust.pan = custPan;
+            cust.aadhar = custAadhar;
+        }
+        const paymentModes = Array.from(document.querySelectorAll('#modalPaymentGroup input:checked')).map(cb=>cb.value);
+        const invoice = {
+            id: currentEditingId || ('inv-'+Date.now()),
+            date: document.getElementById('modalBillDate').value,
+            custName, custPhone, custAddress: document.getElementById('modalCustAddress').value,
+            custPan, custAadhar,
+            placeOfSupply: document.getElementById('modalPlaceSupply').value,
+            discount: parseFloat(document.getElementById('modalDiscount').value)||0,
+            paymentModes,
+            items: itemsData.map(item => ({
+                itemDesc: item.itemDesc, purity: item.purity,
+                grossWt: item.grossWt, stoneWt: item.stoneWt, netWt: item.netWt,
+                ratePerGram: item.ratePerGram,
+                makingType: item.makingType, makingPercent: item.makingPercent, makingFixed: item.makingFixed,
+                hmAmount: item.hmAmount
+            })),
+            grandTotal: parseFloat(document.getElementById('modalGrandTotal').innerText.replace('₹',''))
+        };
+        if (currentEditingId) {
+            const idx = appData.invoices.findIndex(i=>i.id===currentEditingId);
+            if (idx!==-1) appData.invoices[idx]=invoice;
+            else appData.invoices.push(invoice);
+        } else {
+            appData.invoices.push(invoice);
+        }
+        await writeToFile();
+        alert("Invoice saved to pendrive successfully!");
+    }
+
+    async function loadInvoiceForEdit(id) {
+        const inv = appData.invoices.find(i=>i.id===id);
+        if (!inv) return false;
+        currentEditingId = id;
+        itemsData = inv.items.map(item => ({
+            ...item,
+            makingValue: 0, hmValue: 0, rowTotal: 0,
+            makingPercent: item.makingPercent || 12, makingFixed: item.makingFixed || 150,
+            hmAmount: item.hmAmount || 0
+        }));
+        buildInvoiceHTML();
+        document.getElementById('modalCustName').value = inv.custName||'';
+        document.getElementById('modalCustAddress').value = inv.custAddress||'';
+        const printSpan = document.getElementById('printAddressSpan');
+        if (printSpan) printSpan.innerText = inv.custAddress||'';
+        document.getElementById('modalCustPhone').value = inv.custPhone||'';
+        document.getElementById('modalCustPan').value = inv.custPan||'';
+        document.getElementById('modalCustAadhar').value = inv.custAadhar||'';
+        document.getElementById('modalPlaceSupply').value = inv.placeOfSupply||'';
+        document.getElementById('modalDiscount').value = inv.discount||0;
+        document.getElementById('modalBillDate').value = inv.date||new Date().toLocaleDateString('en-GB');
+        document.getElementById('modalInvoiceDate').innerText = inv.date||new Date().toLocaleDateString('en-GB');
+        const chks = document.querySelectorAll('#modalPaymentGroup input');
+        chks.forEach(cb => cb.checked = (inv.paymentModes||[]).includes(cb.value));
+        if (inv.custPhone) renderLedger(inv.custPhone);
+        renderModalItems();
+        recalcModalTotals();
+        updatePrintPaymentDisplay();
+        setupFieldValidation();
+        return true;
+    }
+
+    async function init() {
+        const handle = await getStoredFileHandle();
+        if (!handle) { alert("No pendrive file selected. Please go to Dashboard first."); window.location.href='index.html'; return; }
+        const hasPerm = await ensureWritePermission(handle);
+        if (!hasPerm) { alert("Permission lost. Please go to Dashboard and re-select the file."); window.location.href='index.html'; return; }
+        await loadDataFromHandle(handle);
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+        const printOnly = urlParams.get('print');
+        if (id) {
+            await loadInvoiceForEdit(id);
+            if (printOnly) { setTimeout(() => { window.print(); }, 500); }
+        } else {
+            buildInvoiceHTML();
+        }
+        document.getElementById('saveBtn').onclick = saveCurrentInvoice;
+        document.getElementById('printBtn').onclick = () => { prepareForPrint(); window.print(); };
+    }
+
+    window.addEventListener('beforeprint', prepareForPrint);
+    init();
+</script>
+</body>
+</html>

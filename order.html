@@ -1,0 +1,704 @@
+\<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JP Jewellers | Order Bill</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #eef2f5;
+            font-family: 'Arial', 'Helvetica', 'Segoe UI', sans-serif;
+            padding: 15px;
+        }
+        .top-bar {
+            background: #1e466e;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            color: white;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 5px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-gold { background: #c2a15b; color: #1e466e; }
+        .btn-outline { background: transparent; border: 1px solid #c2a15b; color: #c2a15b; }
+        .btn-green { background: #28a745; color: white; }
+        .invoice-container {
+            max-width: 1300px;
+            width: 100%;
+            background: white;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            margin: 0 auto;
+        }
+        .invoice {
+            padding: 20px 25px 25px 25px;
+            background: white;
+        }
+        .vendor-header {
+            border: 1px solid #000;
+            padding: 12px 15px;
+            margin-bottom: 18px;
+            background: #fefefe;
+        }
+        .company-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .company-icon {
+            width: 33px;
+            height: 33px;
+            border-radius: 8px;
+            background: #1e466e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .company-icon .no-image {
+            font-size: 16px;
+            color: white;
+            font-weight: bold;
+        }
+        .vendor-name {
+            font-size: 22px;
+            font-weight: 800;
+            color: #1e466e;
+        }
+        .vendor-details {
+            font-size: 10px;
+            line-height: 1.4;
+            color: #2c3e50;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+        .contact-row {
+            margin-top: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #1e466e;
+        }
+        .row-flex {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+        .invoice-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+        .meta-box {
+            border: 1px solid #000;
+            padding: 10px 12px;
+            background: white;
+        }
+        .meta-title {
+            font-weight: 800;
+            font-size: 12px;
+            background: #f0f2f5;
+            padding: 4px 8px;
+            margin: -10px -12px 10px -12px;
+            border-bottom: 1px solid #000;
+        }
+        .meta-row {
+            display: flex;
+            margin-bottom: 8px;
+            font-size: 11px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .meta-label {
+            width: 100px;
+            font-weight: 700;
+            font-size: 10px;
+        }
+        .meta-value {
+            flex: 1;
+            min-width: 120px;
+        }
+        .meta-value input, .meta-value textarea {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid #aaa;
+            font-size: 10px;
+            font-family: inherit;
+        }
+        .validation-error {
+            color: #dc3545;
+            font-size: 8px;
+            margin-top: 2px;
+            display: block;
+            font-weight: normal;
+        }
+        /* Print‑only spans – one for each field */
+        .print-name, .print-mobile, .print-address, .print-aadhar, .print-pan, 
+        .print-order-date, .print-advance, .print-desc {
+            display: none;
+        }
+        .signature-footer {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin: 20px 0 15px;
+            border-top: 1px solid #000;
+            padding-top: 15px;
+        }
+        .sign-box {
+            border: 1px solid #000;
+            padding: 12px;
+            min-height: 70px;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        .action-bar {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 18px;
+            padding-top: 12px;
+            border-top: 1px solid #ddd;
+        }
+
+        /* PRINT STYLES – identical to invoice, hide inputs, show spans */
+        @media print {
+            .top-bar, .action-bar, .btn, .validation-error {
+                display: none !important;
+            }
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white;
+            }
+            .invoice-container {
+                margin: 0 auto !important;
+                width: 100% !important;
+                box-shadow: none;
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+            }
+            .invoice {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            /* Hide all input fields and textareas */
+            input, textarea {
+                display: none !important;
+            }
+            /* Show all print‑only spans */
+            .print-name, .print-mobile, .print-address, .print-aadhar, .print-pan,
+            .print-order-date, .print-advance, .print-desc {
+                display: block !important;
+                white-space: pre-wrap;
+                font-size: 10px;
+                font-weight: normal;
+                color: black;
+            }
+            /* Hide entire row if empty (for Aadhar/PAN only – optional fields) */
+            .meta-row[data-empty="true"] {
+                display: none !important;
+            }
+            .vendor-header, .meta-box, .sign-box {
+                border: 1px solid black !important;
+            }
+            @page {
+                margin: 0 !important;
+                size: A4;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <h2>📋 JP JEWELLERS | Order Bill</h2>
+    <div>
+        <button class="btn btn-outline" onclick="window.location.href='index.html'">← Dashboard</button>
+        <button class="btn btn-gold" id="printBtn">🖨️ Print</button>
+        <button class="btn btn-green" id="saveBtn">💾 Save to Pendrive</button>
+    </div>
+</div>
+
+<div class="invoice-container">
+    <div class="invoice" id="orderInvoice"></div>
+    <div class="action-bar" style="padding: 16px 24px; background: #f8f9fa; border-top: 1px solid #ddd; display: flex; justify-content: flex-end; gap: 12px;">
+        <button class="btn btn-outline" onclick="window.location.href='index.html'">Cancel</button>
+        <button class="btn btn-gold" id="printBtn2">🖨️ Print</button>
+        <button class="btn btn-green" id="saveBtn2">💾 Save to Pendrive</button>
+    </div>
+</div>
+
+<script>
+    let currentFileHandle = null;
+    let appData = { invoices: [], customers: {}, goldRates: {}, orders: [] };
+    let currentEditingId = null;
+
+    const DB_NAME = 'JPJewellersFileHandleDB';
+    const STORE_NAME = 'fileHandleStore';
+    const KEY_NAME = 'handle';
+
+    // ---------- File System (same as invoice) ----------
+    async function getStoredFileHandle() {
+        return new Promise((resolve) => {
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onupgradeneeded = () => { const db = request.result; if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME); };
+            request.onsuccess = () => {
+                const db = request.result;
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const getReq = store.get(KEY_NAME);
+                getReq.onsuccess = () => resolve(getReq.result || null);
+                getReq.onerror = () => resolve(null);
+            };
+            request.onerror = () => resolve(null);
+        });
+    }
+
+    async function ensureWritePermission(handle) {
+        if (await handle.queryPermission({ mode: 'readwrite' }) === 'granted') return true;
+        const perm = await handle.requestPermission({ mode: 'readwrite' });
+        return perm === 'granted';
+    }
+
+    async function loadDataFromHandle(handle) {
+        try {
+            const file = await handle.getFile();
+            const text = await file.text();
+            if (text.trim()) {
+                const parsed = JSON.parse(text);
+                appData.invoices = parsed.invoices || [];
+                appData.customers = parsed.customers || {};
+                appData.goldRates = parsed.goldRates || {};
+                appData.orders = parsed.orders || [];
+            } else {
+                appData = { invoices: [], customers: {}, goldRates: {}, orders: [] };
+            }
+            currentFileHandle = handle;
+            return true;
+        } catch(e) { console.error(e); return false; }
+    }
+
+    async function writeToFile() {
+        if (!currentFileHandle) { alert("No file selected."); return false; }
+        const hasPerm = await ensureWritePermission(currentFileHandle);
+        if (!hasPerm) { alert("Permission lost. Please re-select file."); return false; }
+        try {
+            const writable = await currentFileHandle.createWritable();
+            await writable.write(JSON.stringify({ invoices: appData.invoices, customers: appData.customers, goldRates: appData.goldRates, orders: appData.orders }, null, 2));
+            await writable.close();
+            return true;
+        } catch(e) { alert("Error writing: " + e.message); return false; }
+    }
+
+    // ---------- Validation (same as invoice) ----------
+    function validateAadhar(aadharValue) {
+        if (!aadharValue || aadharValue.trim() === '') return { valid: true, error: '' };
+        const cleaned = aadharValue.replace(/\s/g, '');
+        const isValid = /^\d{12}$/.test(cleaned);
+        return { valid: isValid, error: isValid ? '' : 'Aadhar must be exactly 12 digits (0-9 only)' };
+    }
+
+    function validatePAN(panValue) {
+        if (!panValue || panValue.trim() === '') return { valid: true, error: '' };
+        const upperPan = panValue.toUpperCase().trim();
+        const isValid = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(upperPan);
+        return { valid: isValid, error: isValid ? '' : 'PAN format: 5 letters, 4 digits, 1 letter (e.g., ABCDE1234F)' };
+    }
+
+    function setupFieldValidation() {
+        const aadharInput = document.getElementById('modalAadhar');
+        const panInput = document.getElementById('modalPan');
+        
+        if (aadharInput) {
+            let errorSpan = aadharInput.parentNode.querySelector('.validation-error');
+            if (!errorSpan) {
+                errorSpan = document.createElement('span');
+                errorSpan.className = 'validation-error';
+                aadharInput.parentNode.appendChild(errorSpan);
+            }
+            const updateAadharError = () => {
+                const val = aadharInput.value;
+                const result = validateAadhar(val);
+                errorSpan.innerText = result.error;
+                errorSpan.style.color = result.valid ? 'transparent' : '#dc3545';
+                if (!result.valid && val.trim() !== '') aadharInput.style.borderColor = '#dc3545';
+                else aadharInput.style.borderColor = '#aaa';
+                return result.valid;
+            };
+            aadharInput.addEventListener('input', (e) => {
+                let raw = e.target.value.replace(/\D/g, '').slice(0, 12);
+                e.target.value = raw;
+                updateAadharError();
+                // Update print span and data-empty
+                const printSpan = document.getElementById('printAadharSpan');
+                if (printSpan) printSpan.innerText = raw;
+                const row = document.getElementById('aadharRow');
+                if (row) row.setAttribute('data-empty', raw.trim() === '' ? 'true' : 'false');
+            });
+            aadharInput.addEventListener('blur', updateAadharError);
+            updateAadharError();
+        }
+
+        if (panInput) {
+            let errorSpanPan = panInput.parentNode.querySelector('.validation-error');
+            if (!errorSpanPan) {
+                errorSpanPan = document.createElement('span');
+                errorSpanPan.className = 'validation-error';
+                panInput.parentNode.appendChild(errorSpanPan);
+            }
+            const updatePanError = () => {
+                let raw = panInput.value.toUpperCase();
+                const result = validatePAN(raw);
+                if (result.valid) {
+                    errorSpanPan.innerText = '';
+                    panInput.style.borderColor = '#aaa';
+                } else {
+                    errorSpanPan.innerText = result.error;
+                    panInput.style.borderColor = '#dc3545';
+                }
+                return result.valid;
+            };
+            panInput.addEventListener('input', (e) => {
+                let raw = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                if (raw.length > 10) raw = raw.slice(0,10);
+                e.target.value = raw;
+                updatePanError();
+                const printSpan = document.getElementById('printPanSpan');
+                if (printSpan) printSpan.innerText = raw;
+                const row = document.getElementById('panRow');
+                if (row) row.setAttribute('data-empty', raw.trim() === '' ? 'true' : 'false');
+            });
+            panInput.addEventListener('blur', updatePanError);
+            updatePanError();
+        }
+    }
+
+    function areDocsValid() {
+        const aadhar = document.getElementById('modalAadhar')?.value || '';
+        const pan = document.getElementById('modalPan')?.value || '';
+        const aadharValid = validateAadhar(aadhar).valid;
+        const panValid = validatePAN(pan).valid;
+        if (!aadharValid) alert('Please enter valid 12-digit Aadhar number (optional but must be correct if filled).');
+        if (!panValid) alert('Please enter valid PAN (format: 5 letters, 4 digits, 1 letter). Leave blank if not applicable.');
+        return aadharValid && panValid;
+    }
+
+    // ---------- UI Rendering – every field has a print‑only span ----------
+    function setTodayDate() {
+        const d = new Date();
+        return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
+    }
+
+    function buildOrderHTML(order) {
+        const today = setTodayDate();
+        const dateValue = order ? order.date : today;
+        const custName = order ? order.custName : '';
+        const mobile = order ? order.mobile : '';
+        const address = order ? order.address : '';
+        const aadhar = order ? order.aadhar : '';
+        const pan = order ? order.pan : '';
+        const advance = order ? order.advance : 0;
+        const description = order ? order.description : '';
+
+        const safe = (str) => (str || '').replace(/"/g, '&quot;');
+        const aadharEmpty = !aadhar || aadhar.trim() === '';
+        const panEmpty = !pan || pan.trim() === '';
+
+        return `
+            <div class="vendor-header">
+                <div class="company-header">
+                    <div class="company-icon"><div class="no-image">JP</div></div>
+                    <div class="vendor-name">J.P JEWELLERS - Gold & Silver Merchants</div>
+                </div>
+                <div class="vendor-details">
+                    <strong>Sold By:</strong> JP JEWELLERS<br>
+                    <strong>Address:</strong> Lalganj, Bairia, Ballia - 277216
+                </div>
+                <div class="contact-row">
+                    <strong>Contact:</strong> 9919463098 , 9956624200
+                </div>
+                <div class="row-flex">
+                    <span><strong>ORDER DATE:</strong> <span id="orderDateDisplay">${dateValue}</span></span>
+                </div>
+            </div>
+
+            <div class="invoice-meta">
+                <div class="meta-box">
+                    <div class="meta-title">Customer Details</div>
+                    <!-- Customer Name -->
+                    <div class="meta-row">
+                        <div class="meta-label">Customer Name *</div>
+                        <div class="meta-value">
+                            <input type="text" id="modalCustName" value="${safe(custName)}" placeholder="Full Name">
+                            <span class="print-name" id="printNameSpan">${safe(custName)}</span>
+                        </div>
+                    </div>
+                    <!-- Mobile Number -->
+                    <div class="meta-row">
+                        <div class="meta-label">Mobile Number *</div>
+                        <div class="meta-value">
+                            <input type="tel" id="modalMobile" maxlength="10" value="${safe(mobile)}" placeholder="10 digit mobile" oninput="this.value=this.value.replace(/\\D/g,'').slice(0,10)">
+                            <span class="print-mobile" id="printMobileSpan">${safe(mobile)}</span>
+                        </div>
+                    </div>
+                    <!-- Address -->
+                    <div class="meta-row">
+                        <div class="meta-label">Address</div>
+                        <div class="meta-value">
+                            <textarea id="modalAddress" rows="2" placeholder="Street, City, District">${safe(address)}</textarea>
+                            <span class="print-address" id="printAddressSpan"></span>
+                        </div>
+                    </div>
+                    <!-- Aadhar (optional) -->
+                    <div class="meta-row aadhar-row" id="aadharRow" data-empty="${aadharEmpty ? 'true' : 'false'}">
+                        <div class="meta-label">Aadhar Number</div>
+                        <div class="meta-value">
+                            <input type="text" id="modalAadhar" value="${safe(aadhar)}" placeholder="12 digit number" maxlength="12">
+                            <span class="print-aadhar" id="printAadharSpan">${safe(aadhar)}</span>
+                        </div>
+                    </div>
+                    <!-- PAN (optional) -->
+                    <div class="meta-row pan-row" id="panRow" data-empty="${panEmpty ? 'true' : 'false'}">
+                        <div class="meta-label">PAN Number</div>
+                        <div class="meta-value">
+                            <input type="text" id="modalPan" value="${safe(pan)}" placeholder="ABCDE1234F">
+                            <span class="print-pan" id="printPanSpan">${safe(pan)}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="meta-box">
+                    <div class="meta-title">Order Details</div>
+                    <!-- Order Date -->
+                    <div class="meta-row">
+                        <div class="meta-label">Order Date</div>
+                        <div class="meta-value">
+                            <input type="text" id="modalOrderDate" value="${dateValue}" readonly style="background:#f0f0f0;">
+                            <span class="print-order-date" id="printOrderDateSpan">${dateValue}</span>
+                        </div>
+                    </div>
+                    <!-- Advance Payment -->
+                    <div class="meta-row">
+                        <div class="meta-label">Advance Payment (₹)</div>
+                        <div class="meta-value">
+                            <input type="number" id="modalAdvance" value="${advance}" step="100">
+                            <span class="print-advance" id="printAdvanceSpan">₹${advance}</span>
+                        </div>
+                    </div>
+                    <!-- Description -->
+                    <div class="meta-row">
+                        <div class="meta-label">Description</div>
+                        <div class="meta-value">
+                            <textarea id="modalDescription" rows="3" placeholder="What item to make? Specifications...">${safe(description)}</textarea>
+                            <span class="print-desc" id="printDescSpan"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="signature-footer">
+                <div class="sign-box">Customer Signature<br><br>_________________________</div>
+                <div class="sign-box">For J.P JEWELLERS<br><br>_________________________<br>Authorised Signatory</div>
+            </div>
+            <div style="font-size:7px; text-align:center; border-top:1px solid #ccc; padding-top:5px;">This is a computer generated order bill</div>
+        `;
+    }
+
+    function renderOrderForm(order) {
+        const container = document.getElementById('orderInvoice');
+        container.innerHTML = buildOrderHTML(order);
+        
+        // Helper to sync input -> print span
+        function syncInputToSpan(inputId, spanId, transform = (v) => v) {
+            const input = document.getElementById(inputId);
+            const span = document.getElementById(spanId);
+            if (input && span) {
+                const update = () => { span.innerText = transform(input.value); };
+                input.addEventListener('input', update);
+                update();
+            }
+        }
+        // Sync each field
+        syncInputToSpan('modalCustName', 'printNameSpan');
+        syncInputToSpan('modalMobile', 'printMobileSpan');
+        // Address (textarea)
+        const addrTextarea = document.getElementById('modalAddress');
+        const addrSpan = document.getElementById('printAddressSpan');
+        if (addrTextarea && addrSpan) {
+            const syncAddr = () => { addrSpan.innerText = addrTextarea.value; };
+            addrTextarea.addEventListener('input', syncAddr);
+            syncAddr();
+        }
+        // Advance (number)
+        const advInput = document.getElementById('modalAdvance');
+        const advSpan = document.getElementById('printAdvanceSpan');
+        if (advInput && advSpan) {
+            const syncAdv = () => { advSpan.innerText = '₹' + (parseFloat(advInput.value) || 0); };
+            advInput.addEventListener('input', syncAdv);
+            syncAdv();
+        }
+        // Description (textarea)
+        const descTextarea = document.getElementById('modalDescription');
+        const descSpan = document.getElementById('printDescSpan');
+        if (descTextarea && descSpan) {
+            const syncDesc = () => { descSpan.innerText = descTextarea.value; };
+            descTextarea.addEventListener('input', syncDesc);
+            syncDesc();
+        }
+        // Aadhar & PAN (with data-empty)
+        const aadharInput = document.getElementById('modalAadhar');
+        const aadharSpan = document.getElementById('printAadharSpan');
+        const aadharRow = document.getElementById('aadharRow');
+        if (aadharInput && aadharSpan && aadharRow) {
+            const syncAadhar = () => {
+                const val = aadharInput.value;
+                aadharSpan.innerText = val;
+                aadharRow.setAttribute('data-empty', val.trim() === '' ? 'true' : 'false');
+            };
+            aadharInput.addEventListener('input', syncAadhar);
+            syncAadhar();
+        }
+        const panInput = document.getElementById('modalPan');
+        const panSpan = document.getElementById('printPanSpan');
+        const panRow = document.getElementById('panRow');
+        if (panInput && panSpan && panRow) {
+            const syncPan = () => {
+                const val = panInput.value.toUpperCase();
+                panSpan.innerText = val;
+                panRow.setAttribute('data-empty', val.trim() === '' ? 'true' : 'false');
+            };
+            panInput.addEventListener('input', syncPan);
+            syncPan();
+        }
+        
+        // Order date (readonly, but still sync)
+        const orderDateInput = document.getElementById('modalOrderDate');
+        const orderDateSpan = document.getElementById('printOrderDateSpan');
+        if (orderDateInput && orderDateSpan) {
+            orderDateSpan.innerText = orderDateInput.value;
+        }
+        
+        setupFieldValidation();
+    }
+
+    // ---------- Save / Edit ----------
+    async function saveOrder() {
+        if (!areDocsValid()) return;
+        const custName = document.getElementById('modalCustName').value.trim();
+        const mobile = document.getElementById('modalMobile').value.trim();
+        if (!custName || !mobile) { alert("Customer Name and Mobile Number are required"); return; }
+        const order = {
+            id: currentEditingId || ('ord-'+Date.now()),
+            date: document.getElementById('modalOrderDate').value,
+            custName,
+            mobile,
+            address: document.getElementById('modalAddress').value,
+            aadhar: document.getElementById('modalAadhar').value.trim(),
+            pan: document.getElementById('modalPan').value.trim().toUpperCase(),
+            advance: parseFloat(document.getElementById('modalAdvance').value) || 0,
+            description: document.getElementById('modalDescription').value
+        };
+        if (currentEditingId) {
+            const idx = appData.orders.findIndex(o => o.id === currentEditingId);
+            if (idx !== -1) appData.orders[idx] = order;
+            else appData.orders.push(order);
+        } else {
+            appData.orders.push(order);
+            currentEditingId = order.id;
+        }
+        await writeToFile();
+        alert("Order saved successfully with valid Aadhar/PAN.");
+    }
+
+    async function loadOrderForEdit(id) {
+        const order = appData.orders.find(o => o.id === id);
+        if (!order) return false;
+        currentEditingId = id;
+        renderOrderForm(order);
+        return true;
+    }
+
+    // Prepare for print: sync all print spans one final time
+    function prepareForPrint() {
+        // Sync all fields manually to ensure latest values
+        const custName = document.getElementById('modalCustName');
+        const nameSpan = document.getElementById('printNameSpan');
+        if (custName && nameSpan) nameSpan.innerText = custName.value;
+        
+        const mobile = document.getElementById('modalMobile');
+        const mobileSpan = document.getElementById('printMobileSpan');
+        if (mobile && mobileSpan) mobileSpan.innerText = mobile.value;
+        
+        const address = document.getElementById('modalAddress');
+        const addrSpan = document.getElementById('printAddressSpan');
+        if (address && addrSpan) addrSpan.innerText = address.value;
+        
+        const advance = document.getElementById('modalAdvance');
+        const advSpan = document.getElementById('printAdvanceSpan');
+        if (advance && advSpan) advSpan.innerText = '₹' + (parseFloat(advance.value) || 0);
+        
+        const description = document.getElementById('modalDescription');
+        const descSpan = document.getElementById('printDescSpan');
+        if (description && descSpan) descSpan.innerText = description.value;
+        
+        const aadhar = document.getElementById('modalAadhar');
+        const aadharSpan = document.getElementById('printAadharSpan');
+        const aadharRow = document.getElementById('aadharRow');
+        if (aadhar && aadharSpan && aadharRow) {
+            const val = aadhar.value;
+            aadharSpan.innerText = val;
+            aadharRow.setAttribute('data-empty', val.trim() === '' ? 'true' : 'false');
+        }
+        
+        const pan = document.getElementById('modalPan');
+        const panSpan = document.getElementById('printPanSpan');
+        const panRow = document.getElementById('panRow');
+        if (pan && panSpan && panRow) {
+            const val = pan.value.toUpperCase();
+            panSpan.innerText = val;
+            panRow.setAttribute('data-empty', val.trim() === '' ? 'true' : 'false');
+        }
+        
+        const orderDate = document.getElementById('modalOrderDate');
+        const dateSpan = document.getElementById('printOrderDateSpan');
+        if (orderDate && dateSpan) dateSpan.innerText = orderDate.value;
+    }
+
+    // ---------- Init ----------
+    async function init() {
+        const handle = await getStoredFileHandle();
+        if (!handle) { alert("No pendrive file selected. Please go to Dashboard first."); window.location.href='index.html'; return; }
+        const hasPerm = await ensureWritePermission(handle);
+        if (!hasPerm) { alert("Permission lost. Please go to Dashboard and re-select the file."); window.location.href='index.html'; return; }
+        await loadDataFromHandle(handle);
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+        if (id) await loadOrderForEdit(id);
+        else renderOrderForm(null);
+        
+        document.getElementById('saveBtn').onclick = saveOrder;
+        document.getElementById('saveBtn2').onclick = saveOrder;
+        const printHandler = () => { prepareForPrint(); window.print(); };
+        document.getElementById('printBtn').onclick = printHandler;
+        document.getElementById('printBtn2').onclick = printHandler;
+    }
+
+    window.addEventListener('beforeprint', prepareForPrint);
+    init();
+</script>
+</body>
+</html>
